@@ -63,7 +63,7 @@ GO
 
 1. **Prefix with vw_** - Use a consistent naming convention (optional)
 2. **Document dependencies** - List all tables/views used in the header
-3. **Avoid SELECT *** - Explicitly list columns for maintainability
+3. **Avoid SELECT \*** - Explicitly list columns for maintainability
 4. **Consider performance** - Complex views may need underlying indexes
 5. **Use WITH SCHEMABINDING** - For indexed views (SQL Server)
 6. **Test thoroughly** - Ensure view returns expected results
