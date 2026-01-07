@@ -1,16 +1,14 @@
 /*
 Deployment Script: Deploy All Pending Migrations
-Description: Executes all migration scripts that haven't been applied yet
+Description: Displays information about applied migrations and provides deployment guidance
 Author: Database Team
 Date: 2026-01-07
 
 USAGE:
-    1. Update the @MigrationsPath variable to point to your migrations folder
-    2. Execute this script in SQL Server Management Studio
-    3. Review the output to confirm all migrations were applied successfully
-
-NOTE: This script requires xp_cmdshell to be enabled for directory listing
-      OR you can manually execute migrations in order
+    1. Execute this script in SQL Server Management Studio to see applied migrations
+    2. Review the output to identify pending migrations
+    3. Manually execute pending migration scripts in chronological order
+    4. Verify each migration completes successfully
 */
 
 -- =============================================

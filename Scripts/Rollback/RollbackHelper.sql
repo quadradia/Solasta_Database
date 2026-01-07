@@ -93,7 +93,7 @@ PRINT '-------------------------';
 PRINT '
 -- Step 1: Backup
 BACKUP DATABASE [' + @DatabaseName + '] 
-TO DISK = ''C:\Backups\' + @DatabaseName + '_BeforeRollback_' + FORMAT(@CurrentDate, 'yyyyMMdd_HHmm') + '.bak'';
+TO DISK = ''<YOUR_BACKUP_PATH>\' + @DatabaseName + '_BeforeRollback_' + FORMAT(@CurrentDate, 'yyyyMMdd_HHmm') + '.bak'';
 
 -- Step 2: Execute rollback in transaction
 BEGIN TRANSACTION;

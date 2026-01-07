@@ -82,9 +82,9 @@ BEGIN CATCH
     DECLARE @ErrorSeverity INT = ERROR_SEVERITY();
     DECLARE @ErrorState INT = ERROR_STATE();
     
-    -- Log failed migration attempt
+    -- Log failed migration attempt (truncate error message if too long)
     INSERT INTO [dbo].[SchemaVersion] ([MigrationName], [Description], [Success])
-    VALUES (@MigrationName, 'FAILED: ' + @ErrorMessage, 0);
+    VALUES (@MigrationName, 'FAILED: ' + LEFT(@ErrorMessage, 490), 0);
     
     PRINT 'Migration failed: ' + @ErrorMessage;
     
