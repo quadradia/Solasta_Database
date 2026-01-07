@@ -1,3 +1,6 @@
+# CoPilot specstory
+.specstory/
+
 # SQL Server temporary files
 *.bak
 *.log
