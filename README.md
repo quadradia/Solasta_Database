@@ -61,6 +61,31 @@ cd Data/dbo/
 # Create Countries_data.sql with seed data
 ```
 
+## 🚀 Development Resources
+
+**New to this project?** Start with the **[DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md)** - your comprehensive index to all resources, workflows, and tools.
+
+### Essential Documentation
+- **[DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md)** - 📖 Complete resource index with workflows, troubleshooting, and training path
+- **[DATABASE_CONSTITUTION.md](DATABASE_CONSTITUTION.md)** - ⚖️ Core principles and governance (14 articles)
+- **[QUICKSTART.md](QUICKSTART.md)** - ⚡ Step-by-step guides for common tasks
+- **[STRUCTURE.md](STRUCTURE.md)** - 🏗️ Repository organization and file templates
+
+### AI & Automation Tools
+- **[.github/copilot-instructions.md](.github/copilot-instructions.md)** - 🤖 GitHub Copilot configuration for this project
+- **[COPILOT_PROMPTS.md](COPILOT_PROMPTS.md)** - 💬 Ready-to-use prompts, snippets, and helper queries
+- **[Scripts/db-helper.ps1](Scripts/db-helper.ps1)** - 🔧 PowerShell automation for migrations and object creation
+- **[.vscode/mssql.code-snippets](.vscode/mssql.code-snippets)** - ⚡ 15 VS Code snippets (type prefix + Tab)
+
+### CI/CD & Quality
+- **[CICD_GUIDE.md](CICD_GUIDE.md)** - 🔄 GitHub Actions workflows and automation
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - 🤝 Contribution standards and PR process
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - 📋 Quick lookup and cheat sheets
+
+### Templates
+- **[TEMPLATES.sql](TEMPLATES.sql)** - 📝 Complete template library for all object types
+- **[Migrations/TEMPLATE_Migration.sql](Migrations/TEMPLATE_Migration.sql)** - 🔄 Migration file template
+
 ## Common Schemas
 
 This repository includes the following default schemas:
