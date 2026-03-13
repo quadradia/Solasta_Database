@@ -26,29 +26,27 @@
 **
 *******************************************************************************/
 
-DROP FUNCTION IF EXISTS [UTL].[fxGetTimeZoneOffSETByTimeZoneId];
-GO
-
-CREATE FUNCTION [UTL].[fxGetTimeZoneOffSETByTimeZoneId]
+-- NOTE: This function is referenced by computed columns in [MAC].[PoliticalTimeZones].
+-- SQL Server prevents DROP or ALTER while that dependency exists.
+-- Pattern: only CREATE if it does not already exist.
+IF OBJECT_ID('[UTL].[fxGetTimeZoneOffSETByTimeZoneId]', 'FN') IS NULL
+    EXEC(N'CREATE FUNCTION [UTL].[fxGetTimeZoneOffSETByTimeZoneId]
 (
-	@RawTimezoneOffset SMALLINT
-	, @IsDLS BIT = 'False'
-	, @CurrentDate SMALLDATETIME = NULL
+    @RawTimezoneOffset SMALLINT
+    , @IsDLS BIT = ''False''
+    , @CurrentDate SMALLDATETIME = NULL
 )
 RETURNS SMALLINT
 AS
 BEGIN
-    /** Declarations */
     DECLARE @DLSStart SMALLDATETIME
-		, @DLSEnd SMALLDATETIME;
+        , @DLSEnd SMALLDATETIME;
 
-    /** Initialize */
     IF(@CurrentDate IS NULL) BEGIN
         SET @CurrentDate = GETDATE();
     END
 
-    -- ** Check if we have to do a DLS conversion
-    IF (@IsDLS = 'True') BEGIN
+    IF (@IsDLS = ''True'') BEGIN
         SET @DLSStart = (SELECT UTL.fxGetDaylightSavingsTimeStart(CONVERT(VARCHAR, DATEPART(YEAR, @CurrentDate))));
         SET @DLSEnd = (SELECT UTL.fxGetDaylightSavingsTimeEnd(CONVERT(VARCHAR, DATEPART(YEAR, @CurrentDate))));
 
@@ -59,4 +57,5 @@ BEGIN
 
     RETURN @RawTimezoneOffset;
 END
+');
 GO
