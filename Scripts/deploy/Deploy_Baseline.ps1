@@ -299,15 +299,25 @@ Write-Host ""
 $markerFile = Join-Path $MigrDir "20260313_0846_Baseline_ObjectsDeployed.sql"
 
 if ($script:FailCount -eq 0) {
-    Write-Host "FINALIZE  Recording baseline migration marker" -ForegroundColor Yellow
+    Write-Host "FINALIZE  Recording baseline migration markers" -ForegroundColor Yellow
+
+    # 0846 — records tables/views/functions/procedures
     if (Test-Path $markerFile) {
         Invoke-SqlFile -FilePath $markerFile -Label "20260313_0846_Baseline_ObjectsDeployed.sql"
     } else {
         Write-Host "  [WARN] Marker migration file not found: $markerFile" -ForegroundColor DarkYellow
     }
+
+    # 0847 — records the 7 triggers (self-contained; also deploys if missing)
+    $triggerMarkerFile = Join-Path $MigrDir "20260313_0847_Baseline_Triggers.sql"
+    if (Test-Path $triggerMarkerFile) {
+        Invoke-SqlFile -FilePath $triggerMarkerFile -Label "20260313_0847_Baseline_Triggers.sql"
+    } else {
+        Write-Host "  [WARN] Trigger migration file not found: $triggerMarkerFile" -ForegroundColor DarkYellow
+    }
 } else {
-    Write-Host "FINALIZE  Skipping migration marker -- deployment completed with errors." -ForegroundColor DarkYellow
-    Write-Host "          Resolve errors and re-run to apply the marker migration." -ForegroundColor DarkYellow
+    Write-Host "FINALIZE  Skipping migration markers -- deployment completed with errors." -ForegroundColor DarkYellow
+    Write-Host "          Resolve errors and re-run to apply the marker migrations." -ForegroundColor DarkYellow
 }
 Write-Host ""
 
