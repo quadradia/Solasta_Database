@@ -10,7 +10,8 @@
       4. Tables       - All 90 table definitions (two passes for cross-schema FK resolution)
       5. Views        - All 37 view definitions
       6. Procedures   - All 130 stored procedures
-      7. Finalize     - Records 20260313_0846_Baseline_ObjectsDeployed migration marker
+      7. Triggers     - All 7 table triggers
+      8. Finalize     - Records 20260313_0846_Baseline_ObjectsDeployed migration marker
 
     All scripts are idempotent (IF NOT EXISTS guards). Safe to re-run if interrupted.
 
@@ -95,6 +96,7 @@ $TablesDir   = Join-Path $RepoRoot "Tables"
 $ViewsDir    = Join-Path $RepoRoot "Views"
 $FunctionsDir= Join-Path $RepoRoot "Functions"
 $ProcsDir    = Join-Path $RepoRoot "Procedures"
+$TriggersDir = Join-Path $RepoRoot "Triggers"
 
 # -----------------------------------------------------------------------------
 # Counters
@@ -218,7 +220,7 @@ if (-not (Test-Path $RepoRoot)) {
 # -----------------------------------------------------------------------------
 # STEP 1: Bootstrap SchemaVersion table
 # -----------------------------------------------------------------------------
-Write-Host "STEP 1/7  Bootstrap - SchemaVersion table" -ForegroundColor Yellow
+Write-Host "STEP 1/8  Bootstrap - SchemaVersion table" -ForegroundColor Yellow
 $bootstrapFile = Join-Path $MigrDir "00000000_0000_CreateSchemaVersionTable.sql"
 if (Test-Path $bootstrapFile) {
     Invoke-SqlFile -FilePath $bootstrapFile -Label "00000000_0000_CreateSchemaVersionTable.sql"
@@ -231,7 +233,7 @@ Write-Host ""
 # -----------------------------------------------------------------------------
 # STEP 2: Create schemas
 # -----------------------------------------------------------------------------
-Write-Host "STEP 2/7  Migration - Create schemas" -ForegroundColor Yellow
+Write-Host "STEP 2/8  Migration - Create schemas" -ForegroundColor Yellow
 $schemasFile = Join-Path $MigrDir "20260313_0845_Baseline_Schemas.sql"
 if (Test-Path $schemasFile) {
     Invoke-SqlFile -FilePath $schemasFile -Label "20260313_0845_Baseline_Schemas.sql"
@@ -244,21 +246,21 @@ Write-Host ""
 # STEP 3: Functions (must run before Tables -- some tables have computed columns
 #          that directly reference UTL functions; functions must exist first)
 # -----------------------------------------------------------------------------
-Write-Host "STEP 3/7  Functions" -ForegroundColor Yellow
+Write-Host "STEP 3/8  Functions" -ForegroundColor Yellow
 Invoke-SqlDirectory -Directory $FunctionsDir -SectionLabel "Functions"
 Write-Host ""
 
 # -----------------------------------------------------------------------------
 # STEP 4: Tables (Pass 1 -- creates all tables)
 # -----------------------------------------------------------------------------
-Write-Host "STEP 4/7  Tables (Pass 1 -- CREATE TABLE + same-schema FKs)" -ForegroundColor Yellow
+Write-Host "STEP 4/8  Tables (Pass 1 -- CREATE TABLE + same-schema FKs)" -ForegroundColor Yellow
 Invoke-SqlDirectory -Directory $TablesDir -SectionLabel "Tables Pass 1"
 Write-Host ""
 
 # -----------------------------------------------------------------------------
 # STEP 5: Tables (Pass 2 -- applies cross-schema FKs that may have failed pass 1)
 # -----------------------------------------------------------------------------
-Write-Host "STEP 5/7  Tables (Pass 2 -- cross-schema FK resolution)" -ForegroundColor Yellow
+Write-Host "STEP 5/8  Tables (Pass 2 -- cross-schema FK resolution)" -ForegroundColor Yellow
 $tableFiles = Get-ChildItem $TablesDir -Recurse -Filter *.sql | Sort-Object FullName
 if ($tableFiles.Count -gt 0) {
     Write-Host "  $($tableFiles.Count) file(s) (re-run, no-op for already-created objects)" -ForegroundColor DarkGray
@@ -273,15 +275,22 @@ Write-Host ""
 # -----------------------------------------------------------------------------
 # STEP 6: Views
 # -----------------------------------------------------------------------------
-Write-Host "STEP 6/7  Views" -ForegroundColor Yellow
+Write-Host "STEP 6/8  Views" -ForegroundColor Yellow
 Invoke-SqlDirectory -Directory $ViewsDir -SectionLabel "Views"
 Write-Host ""
 
 # -----------------------------------------------------------------------------
 # STEP 7: Stored Procedures
 # -----------------------------------------------------------------------------
-Write-Host "STEP 7/7  Stored Procedures" -ForegroundColor Yellow
+Write-Host "STEP 7/8  Stored Procedures" -ForegroundColor Yellow
 Invoke-SqlDirectory -Directory $ProcsDir -SectionLabel "Procedures"
+Write-Host ""
+
+# -----------------------------------------------------------------------------
+# STEP 8: Triggers
+# -----------------------------------------------------------------------------
+Write-Host "STEP 8/8  Triggers" -ForegroundColor Yellow
+Invoke-SqlDirectory -Directory $TriggersDir -SectionLabel "Triggers"
 Write-Host ""
 
 # -----------------------------------------------------------------------------
