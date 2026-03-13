@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Data Compare: SOL_MAIN_DataCompare
+  Purpose     : Compare row-level data between two SQL Server databases
+  Author      : 
+  Created     : 2025-01-01
+  Usage       : Open in Visual Studio → Tools → SQL Server → New Data Comparison
+                OR double-click this file in Solution Explorer.
+
+  INSTRUCTIONS:
+  1. Update the <ConnectionString> in <SourceConnectionInformation> to point to your SOURCE database.
+  2. Update the <ConnectionString> in <TargetConnectionInformation> to point to your TARGET database.
+  3. Open in Visual Studio and click "Compare" to start the data comparison.
+-->
+<DataComparison xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- ============================================================
+       SOURCE DATABASE (e.g. DEV / Reference)
+       ============================================================ -->
+  <SourceConnectionInformation>
+    <ConnectionString>Data Source=SOLITMDB001;Initial Catalog=SOL_MAIN_SOURCE;Persist Security Info=True;User ID=sa;Pooling=False;Multiple Active Result Sets=False;Connect Timeout=60;Encrypt=False;Trust Server Certificate=False;Command Timeout=0</ConnectionString>
+    <DatabaseType>MicrosoftSqlServer</DatabaseType>
+  </SourceConnectionInformation>
+
+  <!-- ============================================================
+       TARGET DATABASE (e.g. PROD / Destination)
+       ============================================================ -->
+  <TargetConnectionInformation>
+    <ConnectionString>Data Source=SOLITMDB001;Initial Catalog=SOL_MAIN_TARGET;Persist Security Info=True;User ID=sa;Pooling=False;Multiple Active Result Sets=False;Connect Timeout=60;Encrypt=False;Trust Server Certificate=False;Command Timeout=0</ConnectionString>
+    <DatabaseType>MicrosoftSqlServer</DatabaseType>
+  </TargetConnectionInformation>
+
+  <!-- ============================================================
+       COMPARISON OPTIONS
+       ============================================================ -->
+  <Options>
+    <!-- Use source-side indexes to speed up comparison -->
+    <BooleanOption name="UseSourceIndexes"              value="False" />
+    <!-- Use target-side indexes to speed up comparison -->
+    <BooleanOption name="UseTargetIndexes"              value="False" />
+    <!-- Drop constraints on target before applying changes -->
+    <BooleanOption name="DropConstraintsNotInSource"    value="True"  />
+    <!-- Temporarily disable and re-enable constraints during sync -->
+    <BooleanOption name="DisableAndReenableConstraints" value="True"  />
+    <!-- Temporarily disable and re-enable triggers during sync -->
+    <BooleanOption name="DisableAndReenableTriggers"    value="True"  />
+    <!-- Wrap all update statements in a transaction -->
+    <BooleanOption name="UseTransactions"               value="True"  />
+  </Options>
+
+  <!-- ============================================================
+       TABLE SELECTION
+       Uncomment and add entries below to include/exclude specific
+       tables from the comparison.  By default ALL tables are compared.
+
+       Example – include only specific tables:
+       <Table name="[dbo].[Users]"       selected="True"  />
+       <Table name="[dbo].[Roles]"       selected="True"  />
+       <Table name="[dbo].[AuditLog]"    selected="False" />
+       ============================================================ -->
+  <!--
+  <Tables>
+    <Schema name="dbo">
+      <Table name="Users"    selected="True"  />
+      <Table name="Roles"    selected="True"  />
+    </Schema>
+    <Schema name="config">
+      <Table name="Settings" selected="True"  />
+    </Schema>
+  </Tables>
+  -->
+
+</DataComparison>
