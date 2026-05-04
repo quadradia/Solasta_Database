@@ -14,19 +14,21 @@ BEGIN TRY
     DECLARE @MigrationName NVARCHAR(255) = '20260416_1202_CreateRSU_GetUserEmployeeTypesByDealerIdResult';
 
     -- Check if already applied
-    IF EXISTS (SELECT 1 FROM [dbo].[SchemaVersion]
-               WHERE [MigrationName] = @MigrationName)
+    IF EXISTS (SELECT 1
+FROM [dbo].[SchemaVersion]
+WHERE [MigrationName] = @MigrationName)
     BEGIN
-        PRINT 'Migration already applied. Skipping...';
-        ROLLBACK TRANSACTION;
-        RETURN;
-    END
+    PRINT 'Migration already applied. Skipping...';
+    ROLLBACK TRANSACTION;
+    RETURN;
+END
 
     -- Drop existing type if it exists
     IF EXISTS (
-        SELECT 1 FROM sys.table_types
-        WHERE name = N'uddt_GetUserEmployeeTypesByDealerIdResult'
-        AND schema_id = SCHEMA_ID(N'RSU')
+        SELECT 1
+FROM sys.table_types
+WHERE name = N'uddt_GetUserEmployeeTypesByDealerIdResult'
+    AND schema_id = SCHEMA_ID(N'RSU')
     )
         DROP TYPE [RSU].[uddt_GetUserEmployeeTypesByDealerIdResult];
 
@@ -48,15 +50,18 @@ BEGIN TRY
     ');
 
     -- Record migration
-    INSERT INTO [dbo].[SchemaVersion] ([MigrationName], [Description])
-    VALUES (@MigrationName, 'Creates [RSU].[uddt_GetUserEmployeeTypesByDealerIdResult] UDTT mirroring the result set of spGetUserEmployeeTypesByDealerId.');
+    INSERT INTO [dbo].[SchemaVersion]
+    ([MigrationName], [Description])
+VALUES
+    (@MigrationName, 'Creates [RSU].[uddt_GetUserEmployeeTypesByDealerIdResult] UDTT mirroring the result set of spGetUserEmployeeTypesByDealerId.');
 
     COMMIT TRANSACTION;
     PRINT 'Migration 20260416_1202_CreateRSU_GetUserEmployeeTypesByDealerIdResult applied successfully.';
 END TRY
 BEGIN CATCH
     ROLLBACK TRANSACTION;
-    RAISERROR (ERROR_MESSAGE(), 16, 1);
+    DECLARE @ErrMsg NVARCHAR(4000) = ERROR_MESSAGE();
+    RAISERROR(@ErrMsg, 16, 1);
 END CATCH
 GO
 
