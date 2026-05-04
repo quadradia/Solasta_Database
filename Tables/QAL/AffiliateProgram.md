@@ -31,7 +31,7 @@ The affiliate tracking system lives in the **AFL** (Affiliate Marketing) schema 
 
 | Table | Schema | Purpose |
 |---|---|---|
-| `MediaPlatforms` | AFL | Lookup of supported ad platforms (LinkedIn, Facebook, Instagram, TikTok, X, YouTube) |
+| `MediaPlatforms` | AFL | Lookup of supported ad platforms — see [Supported Platforms](#supported-platforms) below |
 | `Affiliates` | AFL | Registered affiliates, each tied to a Dealer with a unique `AffiliateCode` |
 | `AffiliateCampaigns` | AFL | Named campaigns created by an affiliate for a specific dealer |
 | `CampaignPlacements` | AFL | One placement per platform per campaign — holds the unique `TrackingToken` |
@@ -71,7 +71,24 @@ Tracking tokens follow the pattern `AFL-{PlatformCode}-{PlacementID}`:
 - `AFL-FB-00007` → Facebook placement #7
 - `AFL-IG-00123` → Instagram placement #123
 
-Platform codes come from `AFL.MediaPlatforms.MediaPlatformCode` (e.g., `LI`, `FB`, `IG`, `TT`, `X`, `YT`).
+Platform codes come from `AFL.MediaPlatforms.MediaPlatformCode` — see [Supported Platforms](#supported-platforms) below.
+
+### Supported Platforms
+
+The following platforms are seeded in `AFL.MediaPlatforms` and are available for use in tracking tokens:
+
+| MediaPlatformCode | Platform | Token Example |
+|---|---|---|
+| `LI` | LinkedIn | `AFL-LI-00042` |
+| `FB` | Facebook | `AFL-FB-00007` |
+| `IG` | Instagram | `AFL-IG-00123` |
+| `TT` | TikTok | `AFL-TT-00001` |
+| `X` | X (formerly Twitter) | `AFL-X-00005` |
+| `YT` | YouTube | `AFL-YT-00003` |
+| `GA` | Google Ads | `AFL-GA-00011` |
+| `EM` | Email | `AFL-EM-00002` |
+
+New platforms can be added by inserting a row into `AFL.MediaPlatforms` with a unique `MediaPlatformCode` and re-running the seed script (`Data/AFL/MediaPlatforms_data.sql`).
 
 ### Attribution Rules
 

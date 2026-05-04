@@ -11,7 +11,7 @@
  *              Example: Affiliate "JSMITH" posts on LinkedIn → token "AFL-LI-00042"
  * Author:
  * Created: 2026-05-04
- * Dependencies: AFL.AffiliateCampaigns, AFL.MediaPlatforms
+ * Dependencies: AFL.AffiliateCampaigns, AFL.MediaPlatforms, ACC.Dealers
  ******************************************************************************/
 
 IF NOT EXISTS (SELECT *
@@ -21,6 +21,7 @@ BEGIN
     CREATE TABLE [AFL].[CampaignPlacements]
     (
         [CampaignPlacementID] [int] IDENTITY(1,1) NOT NULL,
+        [DealerId] [int] NOT NULL,
         [AffiliateCampaignId] [int] NOT NULL,
         [MediaPlatformId] [int] NOT NULL,
         [TrackingToken] [varchar](50) NOT NULL,
@@ -109,4 +110,14 @@ ALTER TABLE [AFL].[CampaignPlacements] CHECK CONSTRAINT [FK_CampaignPlacements_A
 GO
 
 ALTER TABLE [AFL].[CampaignPlacements] CHECK CONSTRAINT [FK_CampaignPlacements_MediaPlatforms]
+GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.foreign_keys
+WHERE name = 'FK_CampaignPlacements_Dealers')
+ALTER TABLE [AFL].[CampaignPlacements]  WITH CHECK ADD  CONSTRAINT [FK_CampaignPlacements_Dealers] FOREIGN KEY([DealerId])
+REFERENCES [ACC].[Dealers] ([DealerID])
+GO
+
+ALTER TABLE [AFL].[CampaignPlacements] CHECK CONSTRAINT [FK_CampaignPlacements_Dealers]
 GO
