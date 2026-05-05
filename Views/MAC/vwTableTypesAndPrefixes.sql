@@ -61,4 +61,23 @@ AS
     -- ADD NEW UNION BLOCKS BELOW as new Proxy-enabled entities are onboarded.
     -- Follow the checklist in .github/ProxyID-PrefixRegistry.md.
     -- =========================================================================
+
+    UNION ALL
+
+    -- =========================================================================
+    -- AFL.AffiliateTypes  (Prefix examples: AFST, AFIN, AFPR)
+    -- Entity: Affiliate
+    -- =========================================================================
+    SELECT
+        [AffiliateTypeID]             AS [Id]
+        , [Prefix]
+        , [AffiliateTypeName]         AS [Name]
+        , [AffiliateTypeDescription]  AS [Description]
+        , 'AFL'                       AS [Schema]
+        , 'AffiliateTypes'            AS [TableName]
+        , 'Affiliate'                 AS [TypeName]
+    FROM
+        [AFL].[AffiliateTypes]
+    WHERE
+        (IsDeleted = 0)
 GO

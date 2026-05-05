@@ -63,6 +63,16 @@ BEGIN
     -- Follow the checklist in .github/ProxyID-PrefixRegistry.md.
     -- =========================================================================
 
+    -- =========================================================================
+    -- Affiliate — AFL.AffiliateTypes
+    -- =========================================================================
+    ELSE IF (@TypeName = 'Affiliate')
+    BEGIN
+        SELECT @Prefix = [Prefix]
+        FROM [AFL].[AffiliateTypes] AS T WITH (NOLOCK)
+        WHERE (T.[AffiliateTypeID] = @TypeId);
+    END
+
     -- Insert result row only if a prefix was resolved
     IF (@Prefix IS NOT NULL)
     BEGIN

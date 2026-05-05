@@ -63,7 +63,9 @@ A Proxy-ID takes the form:
 
 | Prefix | TypeId | TypeName | Type Table | Description | Registered |
 |--------|--------|----------|------------|-------------|------------|
-| *(none yet — reserved namespace `AF**`)* | | | | | |
+| `AFST` | 1 | Standard Affiliate | `AFL.AffiliateTypes` | General-purpose affiliate account | 2026-05-05 |
+| `AFIN` | 2 | Influencer Affiliate | `AFL.AffiliateTypes` | Social media influencer affiliate | 2026-05-05 |
+| `AFPR` | 3 | Partner Affiliate | `AFL.AffiliateTypes` | Business partner affiliate | 2026-05-05 |
 
 ### ACE — Customer Entities
 
