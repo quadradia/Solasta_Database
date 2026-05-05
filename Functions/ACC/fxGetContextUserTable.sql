@@ -33,15 +33,24 @@ RETURNS
 @ReturnList TABLE
 (
 	UserID UNIQUEIDENTIFIER NOT NULL
-	, HRUserId INT NULL
-	, GPEmployeeID NVARCHAR(25) NULL
-	, UserGuidMasked VARCHAR(50) NOT NULL
-	, FirstName NVARCHAR(MAX) NOT NULL
-	, LastName NVARCHAR(MAX) NOT NULL
-	, Email NVARCHAR(MAX) NULL
-	, Username NVARCHAR(256) NULL
-	, PhoneNumber NVARCHAR(MAX) NULL
-	, DealerId INT NULL
+	,
+	HRUserId INT NULL
+	,
+	GPEmployeeID NVARCHAR(25) NULL
+	,
+	UserGuidMasked VARCHAR(50) NOT NULL
+	,
+	FirstName NVARCHAR(MAX) NOT NULL
+	,
+	LastName NVARCHAR(MAX) NOT NULL
+	,
+	Email NVARCHAR(MAX) NULL
+	,
+	Username NVARCHAR(256) NULL
+	,
+	PhoneNumber NVARCHAR(MAX) NULL
+	,
+	DealerTenantId INT NULL
 )
 WITH SCHEMABINDING
 AS
@@ -57,11 +66,14 @@ BEGIN
 
 	SET @UserGuidMasked = 'XXXXXXX-XXXX-XXXX-XXXX-' + RIGHT(CAST(@UserID AS VARCHAR(50)), 12);
 
-	INSERT INTO @ReturnList ( UserID, FirstName, LastName, UserGuidMasked ) VALUES (@UserID, '', '', @UserGuidMasked);
+	INSERT INTO @ReturnList
+		( UserID, FirstName, LastName, UserGuidMasked )
+	VALUES
+		(@UserID, '', '', @UserGuidMasked);
 
 	-- ** Get the Dealer Id
 	UPDATE RL SET
-		RL.DealerId = URS.DealerID
+		RL.DealerTenantId = URS.DealerTenantId
 		, RL.HRUserId = URS.HRUserId
 		, RL.GPEmployeeID = URS.GPEmployeeID
 		, RL.FirstName = URS.FirstName

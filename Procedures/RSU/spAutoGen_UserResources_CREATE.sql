@@ -9,89 +9,145 @@ GO
 **		Date: 10/02/2015 (UTC)
 ***********************************************************************************************************************/
 CREATE   Procedure [RSU].[spAutoGen_UserResources_CREATE]
-(
-		@DealerId INT
-		, @UserId UNIQUEIDENTIFIER
-		, @UserEmployeeTypeId VARCHAR(20)
-		, @UserResourceAddressId INT
-		, @RecruitedById INT
-		, @GPEmployeeId NVARCHAR(25)
-		, @RecruitedByDate DATETIMEOFFSET
-		, @FullName NVARCHAR(101)
-		, @PublicFullName NVARCHAR(53)
-		, @SSN NVARCHAR(50)
-		, @FirstName NVARCHAR(50)
-		, @MiddleName NVARCHAR(50)
-		, @LastName NVARCHAR(50)
-		, @PreferredName NVARCHAR(50)
-		, @CompanyName NVARCHAR(50)
-		, @MaritalStatus BIT
-		, @SpouseName NVARCHAR(50)
-		, @UserName NVARCHAR(256)
-		, @Password VARCHAR(60)
-		, @BirthDate DATETIME
-		, @HomeTown NVARCHAR(50)
-		, @BirthCity NVARCHAR(50)
-		, @BirthState NVARCHAR(50)
-		, @BirthCountry NVARCHAR(50)
-		, @Sex TINYINT
-		, @ShirtSize TINYINT
-		, @HatSize TINYINT
-		, @DLNumber NVARCHAR(50)
-		, @DLState NVARCHAR(50)
-		, @DLCountry NVARCHAR(50)
-		, @DLExpiresOn DATETIME
-		, @DLExpiration NVARCHAR(50)
-		, @Height NVARCHAR(10)
-		, @Weight NVARCHAR(10)
-		, @EyeColor NVARCHAR(20)
-		, @HairColor NVARCHAR(20)
-		, @PhoneHome NVARCHAR(25)
-		, @PhoneCell NVARCHAR(50)
-		, @PhoneCellCarrierID SMALLINT
-		, @PhoneFax NVARCHAR(25)
-		, @Email NVARCHAR(100)
-		, @CorporateEmail NVARCHAR(100)
-		, @TreeLevel INT
-		, @HasVerifiedAddress BIT
-		, @RightToWorkExpirationDate DATETIME
-		, @RightToWorkNotes NVARCHAR(250)
-		, @RightToWorkStatusID INT
-		, @IsLocked BIT
-		, @IsActive BIT		
-		, @ModifiedDate DATETIMEOFFSET
-		, @ModifiedById UNIQUEIDENTIFIER		
-		, @CreatedDate DATETIMEOFFSET
-		, @CreatedById UNIQUEIDENTIFIER
+	(
+	@DealerId INT
+		,
+	@UserId UNIQUEIDENTIFIER
+		,
+	@UserEmployeeTypeId VARCHAR(20)
+		,
+	@UserResourceAddressId INT
+		,
+	@RecruitedById INT
+		,
+	@GPEmployeeId NVARCHAR(25)
+		,
+	@RecruitedByDate DATETIMEOFFSET
+		,
+	@FullName NVARCHAR(101)
+		,
+	@PublicFullName NVARCHAR(53)
+		,
+	@SSN NVARCHAR(50)
+		,
+	@FirstName NVARCHAR(50)
+		,
+	@MiddleName NVARCHAR(50)
+		,
+	@LastName NVARCHAR(50)
+		,
+	@PreferredName NVARCHAR(50)
+		,
+	@CompanyName NVARCHAR(50)
+		,
+	@MaritalStatus BIT
+		,
+	@SpouseName NVARCHAR(50)
+		,
+	@UserName NVARCHAR(256)
+		,
+	@Password VARCHAR(60)
+		,
+	@BirthDate DATETIME
+		,
+	@HomeTown NVARCHAR(50)
+		,
+	@BirthCity NVARCHAR(50)
+		,
+	@BirthState NVARCHAR(50)
+		,
+	@BirthCountry NVARCHAR(50)
+		,
+	@Sex TINYINT
+		,
+	@ShirtSize TINYINT
+		,
+	@HatSize TINYINT
+		,
+	@DLNumber NVARCHAR(50)
+		,
+	@DLState NVARCHAR(50)
+		,
+	@DLCountry NVARCHAR(50)
+		,
+	@DLExpiresOn DATETIME
+		,
+	@DLExpiration NVARCHAR(50)
+		,
+	@Height NVARCHAR(10)
+		,
+	@Weight NVARCHAR(10)
+		,
+	@EyeColor NVARCHAR(20)
+		,
+	@HairColor NVARCHAR(20)
+		,
+	@PhoneHome NVARCHAR(25)
+		,
+	@PhoneCell NVARCHAR(50)
+		,
+	@PhoneCellCarrierID SMALLINT
+		,
+	@PhoneFax NVARCHAR(25)
+		,
+	@Email NVARCHAR(100)
+		,
+	@CorporateEmail NVARCHAR(100)
+		,
+	@TreeLevel INT
+		,
+	@HasVerifiedAddress BIT
+		,
+	@RightToWorkExpirationDate DATETIME
+		,
+	@RightToWorkNotes NVARCHAR(250)
+		,
+	@RightToWorkStatusID INT
+		,
+	@IsLocked BIT
+		,
+	@IsActive BIT
+		,
+	@ModifiedDate DATETIMEOFFSET
+		,
+	@ModifiedById UNIQUEIDENTIFIER
+		,
+	@CreatedDate DATETIMEOFFSET
+		,
+	@CreatedById UNIQUEIDENTIFIER
 )
 AS
 BEGIN
 	/**************
 	 * INITIALIZE
 	 **************/
-	 DECLARE @UserResourceID INT
+	DECLARE @UserResourceID INT
 		, @ACLUserID UNIQUEIDENTIFIER = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER)
 		, @UserGUID NVARCHAR(MAX)
 		, @CreatedAccessId SMALLINT;
 
-		/**********************************
+	/**********************************
 		 * SET Modified And Created By IDs
 		 **********************************/
-		IF (@ModifiedById IS NULL OR @ModifiedById = '00000000-0000-0000-0000-000000000000') BEGIN
-			SET @ModifiedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
-		END 
-		IF (@CreatedById IS NULL OR @CreatedById = '00000000-0000-0000-0000-000000000000') BEGIN
-			SET @CreatedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
-		END 
+	IF (@ModifiedById IS NULL OR @ModifiedById = '00000000-0000-0000-0000-000000000000') BEGIN
+		SET @ModifiedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
+	END
+	IF (@CreatedById IS NULL OR @CreatedById = '00000000-0000-0000-0000-000000000000') BEGIN
+		SET @CreatedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
+	END
 	/*********************
 	 * CHECK ACCESS LEVEL
 	 *********************/
-	 IF (NOT EXISTS(SELECT * FROM [GEN].fxGetAccessLevel('CREATE','RSU','UserResources') AS AL WHERE (AL.CreateAccessId > 0))) BEGIN
+	IF (NOT EXISTS(SELECT *
+	FROM [GEN].fxGetAccessLevel('CREATE','RSU','UserResources') AS AL
+	WHERE (AL.CreateAccessId > 0))) BEGIN
 		--** Get ACL Information
 		--SELECT @ACLUserID = UserId, @UserGUID = @UserGUID, @CreatedAccessId = AL.CreateAccessId  FROM [GEN].fxGetAccessLevel('CREATE','RSU','UserResources') AS AL WHERE (AL.CreateAccessId > 0)
 
 		--** Check that there is a user
-		SELECT TOP 1 @UserGUID = UserGuidIDMasked FROM [GEN].fxGetUserInfo();
+		SELECT TOP 1
+			@UserGUID = UserGuidIDMasked
+		FROM [GEN].fxGetUserInfo();
 
 		RAISERROR ('[50100]:The user "%s" does not have CREATE privileges on table "%s".'
            , 18 -- Severity,
@@ -100,13 +156,14 @@ BEGIN
 		   , N'[RSU].[UserResources]');
 
 		RETURN;
-	 END
+	END
 
-	 /************
+	/************
 	 * CREATE ROW
 	 ************/
-	 INSERT INTO RSU.UserResources (
-		[DealerId]
+	INSERT INTO RSU.UserResources
+		(
+		[DealerTenantId]
 		, [UserId]
 		, [UserEmployeeTypeId]
 		, [UserResourceAddressId]
@@ -157,8 +214,10 @@ BEGIN
 		, [IsActive]
 		, [ModifiedById]
 		, [CreatedById]
-	 )VALUES (
-		@DealerId
+		)
+	VALUES
+		(
+			@DealerId
 		, @UserId
 		, @UserEmployeeTypeId
 		, @UserResourceAddressId
@@ -211,11 +270,12 @@ BEGIN
 		, @CreatedById
 	 );
 
-	 /*************
+	/*************
 	 * Return ROW
 	 **************/
-	 SELECT * FROM RSU.UserResources
-		WHERE
+	SELECT *
+	FROM RSU.UserResources
+	WHERE
 		(UserResourceID = SCOPE_IDENTITY());
 
 END;

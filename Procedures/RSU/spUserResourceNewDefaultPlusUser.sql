@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spUserResourceNewDefaultPlusUser.sql
 **		Name: spUserResourceNewDefaultPlusUser
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,24 +24,37 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	01/21/2017	Andres Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserResourceNewDefaultPlusUser]
-(
+	(
 	@DealerId INT
-	, @SeasonId INT
-	, @FirstName NVARCHAR(50)
-	, @MiddleName NVARCHAR(50) = NULL
-	, @LastName NVARCHAR(50)
-	, @Email NVARCHAR(256)
-	, @PhoneNumber NVARCHAR(15)
-	, @RoleId UNIQUEIDENTIFIER = NULL
-	, @UserTypeID SMALLINT = 1 
-	, @UserEmployeeTypeId VARCHAR(20)
-	, @UserID UNIQUEIDENTIFIER OUTPUT
-	, @UserResourceID INT OUTPUT
-	, @UserRecruitID INT OUTPUT
-	, @ShowOutput BIT = 'True'
+	,
+	@SeasonId INT
+	,
+	@FirstName NVARCHAR(50)
+	,
+	@MiddleName NVARCHAR(50) = NULL
+	,
+	@LastName NVARCHAR(50)
+	,
+	@Email NVARCHAR(256)
+	,
+	@PhoneNumber NVARCHAR(15)
+	,
+	@RoleId UNIQUEIDENTIFIER = NULL
+	,
+	@UserTypeID SMALLINT = 1
+	,
+	@UserEmployeeTypeId VARCHAR(20)
+	,
+	@UserID UNIQUEIDENTIFIER OUTPUT
+	,
+	@UserResourceID INT OUTPUT
+	,
+	@UserRecruitID INT OUTPUT
+	,
+	@ShowOutput BIT = 'True'
 )
 AS
 BEGIN
@@ -58,39 +71,47 @@ BEGIN
 		-- ** Set the UserId
 		SET @UserID = NEWID();
 
-		-- ** Get Dealer information 
-		SELECT @DealerName = DealerName FROM [ACC].[Dealers] WHERE DealerID = @DealerId;
+		-- ** Get Dealer information
+		SELECT @DealerName = DealerTenantName
+	FROM [ACC].[DealerTenants]
+	WHERE DealerTenantID = @DealerId;
 
 		-- ** Check for duplicate users
-		IF(EXISTS(SELECT TOP 1 1 FROM [ACC].[Users] WHERE (Email = @Email AND DealerId = @DealerId))) BEGIN
-			RAISERROR (N'[30200]:This user already exists with email "%s" for dealer "%s (%d)"'
+		IF(EXISTS(SELECT TOP 1
+		1
+	FROM [ACC].[Users]
+	WHERE (Email = @Email AND DealerTenantId = @DealerId))) BEGIN
+		RAISERROR (N'[30200]:This user already exists with email "%s" for dealer "%s (%d)"'
 				, 18 -- Severity
 				, 1 -- State
 				, @Email
 				, @DealerName
 				, @DealerId);
-		END
+	END
 
 		-- ** STATEMENT
-		INSERT INTO [ACC].[Users] (
-			[UserID]
-			, [DealerId]
-			, [LanguageId]
-			, [FirstName]
-			, [LastName]
-			, [Email]
-			, [EmailConfirmed]
-			, [Username]
-			, [PasswordHash]
-			, [SecurityStamp]
-			, [PhoneNumber]
-			, [PhoneNumberConfirmed]
-			, [TwoFactorEnabled]
-			, [LockoutEnabled]
-			, [AccessFailedCount]
-		) VALUES (
+		INSERT INTO [ACC].[Users]
+		(
+		[UserID]
+		, [DealerTenantId]
+		, [LanguageId]
+		, [FirstName]
+		, [LastName]
+		, [Email]
+		, [EmailConfirmed]
+		, [Username]
+		, [PasswordHash]
+		, [SecurityStamp]
+		, [PhoneNumber]
+		, [PhoneNumberConfirmed]
+		, [TwoFactorEnabled]
+		, [LockoutEnabled]
+		, [AccessFailedCount]
+		)
+	VALUES
+		(
 			@UserID, -- UserID - uniqueidentifier
-			@DealerId , -- DealerId - int
+			@DealerId , -- DealerTenantId - int
 			@LanguageId , -- LanguageId - nvarchar(50)
 			@FirstName , -- FirstName - nvarchar(max)
 			@LastName , -- LastName - nvarchar(max)
@@ -107,22 +128,28 @@ BEGIN
 		);
 
 		IF (@RoleId IS NOT NULL) BEGIN
-			INSERT INTO [ACC].[UserRoles] ([UserId], [RoleId]) VALUES (@UserID, @RoleId);
-		END
+		INSERT INTO [ACC].[UserRoles]
+			([UserId], [RoleId])
+		VALUES
+			(@UserID, @RoleId);
+	END
 
 		-- ** Create User Resources
 		-- ** ** Create Address First
 		DECLARE @UserResourceAddressID INT;
-		INSERT INTO [RSU].[UserResourceAddresses] (
-			[PoliticalStateId]
-			, [PoliticalCountryId]
-			, [PoliticalTimeZoneId]
-			, [StreetAddress]
-			, [StreetAddress2]
-			, [City]
-			, [PostalCode]
-			, [PlusFour]
-		) VALUES (
+		INSERT INTO [RSU].[UserResourceAddresses]
+		(
+		[PoliticalStateId]
+		, [PoliticalCountryId]
+		, [PoliticalTimeZoneId]
+		, [StreetAddress]
+		, [StreetAddress2]
+		, [City]
+		, [PostalCode]
+		, [PlusFour]
+		)
+	VALUES
+		(
 			'UT' , -- PoliticalStateId - varchar(4)
 			N'USA' , -- PoliticalCountryId - nvarchar(10)
 			7 , -- PoliticalTimeZoneId - int
@@ -135,29 +162,32 @@ BEGIN
 		SET @UserResourceAddressID = SCOPE_IDENTITY();
 		-- ** ** Create Resource Second
 		DECLARE @GPEmployeeId NVARCHAR(25) = [UTL].fxCreateGpEmployeeNumberNxN(@FirstName, @LastName, @DealerId, 3, 3);
-		INSERT INTO [RSU].[UserResources] (
-			[DealerId]
-			, [UserId]
-			, [UserEmployeeTypeId]
-			, [UserResourceAddressId]
-			, [GPEmployeeId]
-			, [RecruitedByDate]
-			, [FullName]
-			, [PublicFullName]
-			, [FirstName]
-			, [MiddleName]
-			, [LastName]
-			, [PreferredName]
-			, [UserName]
-			, [Password]
-			, [Sex]
-			, [PhoneCell]
-			, [Email]
-			, [CorporateEmail]
-			, [HasVerifiedAddress]
-			, [IsLocked]
-		) VALUES (
-			@DealerId , -- DealerId - int
+		INSERT INTO [RSU].[UserResources]
+		(
+		[DealerTenantId]
+		, [UserId]
+		, [UserEmployeeTypeId]
+		, [UserResourceAddressId]
+		, [GPEmployeeId]
+		, [RecruitedByDate]
+		, [FullName]
+		, [PublicFullName]
+		, [FirstName]
+		, [MiddleName]
+		, [LastName]
+		, [PreferredName]
+		, [UserName]
+		, [Password]
+		, [Sex]
+		, [PhoneCell]
+		, [Email]
+		, [CorporateEmail]
+		, [HasVerifiedAddress]
+		, [IsLocked]
+		)
+	VALUES
+		(
+			@DealerId , -- DealerTenantId - int
 			@UserID , -- UserId - uniqueidentifier
 			@UserEmployeeTypeId , -- UserEmployeeTypeId - varchar(20)
 			@UserResourceAddressID , -- UserResourceAddressId - int
@@ -186,17 +216,19 @@ BEGIN
 		-- ** Create User Recruit or Contract
 		-- ** ** Create Address First
 		DECLARE @UserRecruitAddressId INT;
-		INSERT INTO [RSU].[UserRecruitAddresses] (
-			[PoliticalStateId]
-			, [PoliticalCountryId]
-			, [PoliticalTimeZoneId]
-			, [StreetAddress]
-			, [StreetAddress2]
-			, [City]
-			, [PostalCode]
-			, [PlusFour]
-		) SELECT TOP 1
-            URA.PoliticalStateId
+		INSERT INTO [RSU].[UserRecruitAddresses]
+		(
+		[PoliticalStateId]
+		, [PoliticalCountryId]
+		, [PoliticalTimeZoneId]
+		, [StreetAddress]
+		, [StreetAddress2]
+		, [City]
+		, [PostalCode]
+		, [PlusFour]
+		)
+	SELECT TOP 1
+		URA.PoliticalStateId
             , URA.PoliticalCountryId
             , URA.PoliticalTimeZoneId
             , URA.StreetAddress
@@ -204,36 +236,37 @@ BEGIN
             , URA.City
             , URA.PostalCode
             , URA.PlusFour
-		FROM
-			[RSU].[UserResourceAddresses] AS URA WITH (NOLOCK)
-		WHERE (URA.UserResourceAddressID = @UserResourceAddressID);
+	FROM
+		[RSU].[UserResourceAddresses] AS URA WITH (NOLOCK)
+	WHERE (URA.UserResourceAddressID = @UserResourceAddressID);
 		SET @UserRecruitAddressId = SCOPE_IDENTITY();
 		-- ** ** Create Recruit (Contract) Second
-		INSERT INTO [RSU].[UserRecruits] (
-			[UserResourceId]
-			, [UserTypeId]
-			, [UserRecruitAddressId]
-			, [DealerId]
-			, [SeasonId]
-			, [IsRecruiter]
-			, [SocialSecCardStatusID]
-			, [DriversLicenseStatusID]
-			, [W4StatusID]
-			, [I9StatusID]
-			, [W9StatusID]
-			, [SocialSecCardNotes]
-			, [DriversLicenseNotes]
-			, [RentExempt]
-			, [IsServiceTech]
-			, [StateId]
-			, [CountryId]
-			, [StreetAddress]
-			, [StreetAddress2]
-			, [City]
-			, [PostalCode]
-		) 
-		SELECT
-			@UserResourceID -- UserResourceId - int
+		INSERT INTO [RSU].[UserRecruits]
+		(
+		[UserResourceId]
+		, [UserTypeId]
+		, [UserRecruitAddressId]
+		, [DealerTenantId]
+		, [SeasonId]
+		, [IsRecruiter]
+		, [SocialSecCardStatusID]
+		, [DriversLicenseStatusID]
+		, [W4StatusID]
+		, [I9StatusID]
+		, [W9StatusID]
+		, [SocialSecCardNotes]
+		, [DriversLicenseNotes]
+		, [RentExempt]
+		, [IsServiceTech]
+		, [StateId]
+		, [CountryId]
+		, [StreetAddress]
+		, [StreetAddress2]
+		, [City]
+		, [PostalCode]
+		)
+	SELECT
+		@UserResourceID -- UserResourceId - int
 			, @UserTypeID -- UserTypeId - smallint (	CORPGROUP	Administrator )
 			, @UserRecruitAddressId -- UserRecruitAddressId - int
 			, @DealerId
@@ -253,10 +286,11 @@ BEGIN
 			, URA.StreetAddress -- StreetAddress - nvarchar(50)
 			, URA.StreetAddress2 -- StreetAddress2 - nvarchar(50)
 			, URA.City -- City - nvarchar(50)
-			, URA.PostalCode -- PostalCode - nvarchar(10)
-		FROM
-			[RSU].[UserResourceAddresses] AS URA WITH (NOLOCK)
-		WHERE
+			, URA.PostalCode
+	-- PostalCode - nvarchar(10)
+	FROM
+		[RSU].[UserResourceAddresses] AS URA WITH (NOLOCK)
+	WHERE
 			(URA.UserResourceAddressID = @UserResourceAddressID);
 		SET @UserRecruitID = SCOPE_IDENTITY();
 
@@ -266,8 +300,10 @@ BEGIN
 
 		/** Return New Resource */
 		IF (@ShowOutput = 1) BEGIN
-			SELECT * FROM [RSU].[vwUserResourceFullSearchDataSet] WHERE Id = @UserResourceID;
-		END;
+		SELECT *
+		FROM [RSU].[vwUserResourceFullSearchDataSet]
+		WHERE Id = @UserResourceID;
+	END;
 
 	END TRY
 	BEGIN CATCH

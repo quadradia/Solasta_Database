@@ -9,60 +9,87 @@ GO
 **		Date: 10/02/2015 (UTC)
 ***********************************************************************************************************************/
 CREATE   Procedure [RSU].[spAutoGen_Seasons_CREATE]
-(
-		@PreSeasonID INT
-		, @DealerId INT
-		, @SeasonName NVARCHAR(50)
-		, @StartDate DATETIMEOFFSET
-		, @EndDate DATETIMEOFFSET
-		, @ShowInHiringManager BIT
-		, @IsCurrent BIT
-		, @IsVisibleToRecruits BIT
-		, @IsInsideSales BIT
-		, @IsPreseason BIT
-		, @IsSummer BIT
-		, @IsExtended BIT
-		, @IsYearRound BIT
-		, @IsContractor BIT
-		, @IsDealer BIT
-		, @IsCurbNSign BIT
-		, @ExcellentCreditScoreThreshold INT
-		, @PassCreditScoreThreshold INT
-		, @SubCreditScoreThreshold INT
-		, @IsActive BIT		
-		, @ModifiedDate DATETIMEOFFSET
-		, @ModifiedById UNIQUEIDENTIFIER		
-		, @CreatedDate DATETIMEOFFSET
-		, @CreatedById UNIQUEIDENTIFIER
+	(
+	@PreSeasonID INT
+		,
+	@DealerId INT
+		,
+	@SeasonName NVARCHAR(50)
+		,
+	@StartDate DATETIMEOFFSET
+		,
+	@EndDate DATETIMEOFFSET
+		,
+	@ShowInHiringManager BIT
+		,
+	@IsCurrent BIT
+		,
+	@IsVisibleToRecruits BIT
+		,
+	@IsInsideSales BIT
+		,
+	@IsPreseason BIT
+		,
+	@IsSummer BIT
+		,
+	@IsExtended BIT
+		,
+	@IsYearRound BIT
+		,
+	@IsContractor BIT
+		,
+	@IsDealer BIT
+		,
+	@IsCurbNSign BIT
+		,
+	@ExcellentCreditScoreThreshold INT
+		,
+	@PassCreditScoreThreshold INT
+		,
+	@SubCreditScoreThreshold INT
+		,
+	@IsActive BIT
+		,
+	@ModifiedDate DATETIMEOFFSET
+		,
+	@ModifiedById UNIQUEIDENTIFIER
+		,
+	@CreatedDate DATETIMEOFFSET
+		,
+	@CreatedById UNIQUEIDENTIFIER
 )
 AS
 BEGIN
 	/**************
 	 * INITIALIZE
 	 **************/
-	 DECLARE @SeasonID INT
+	DECLARE @SeasonID INT
 		, @ACLUserID UNIQUEIDENTIFIER = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER)
 		, @UserGUID NVARCHAR(MAX)
 		, @CreatedAccessId SMALLINT;
 
-		/**********************************
+	/**********************************
 		 * SET Modified And Created By IDs
 		 **********************************/
-		IF (@ModifiedById IS NULL OR @ModifiedById = '00000000-0000-0000-0000-000000000000') BEGIN
-			SET @ModifiedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
-		END 
-		IF (@CreatedById IS NULL OR @CreatedById = '00000000-0000-0000-0000-000000000000') BEGIN
-			SET @CreatedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
-		END 
+	IF (@ModifiedById IS NULL OR @ModifiedById = '00000000-0000-0000-0000-000000000000') BEGIN
+		SET @ModifiedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
+	END
+	IF (@CreatedById IS NULL OR @CreatedById = '00000000-0000-0000-0000-000000000000') BEGIN
+		SET @CreatedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
+	END
 	/*********************
 	 * CHECK ACCESS LEVEL
 	 *********************/
-	 IF (NOT EXISTS(SELECT * FROM [GEN].fxGetAccessLevel('CREATE','RSU','Seasons') AS AL WHERE (AL.CreateAccessId > 0))) BEGIN
+	IF (NOT EXISTS(SELECT *
+	FROM [GEN].fxGetAccessLevel('CREATE','RSU','Seasons') AS AL
+	WHERE (AL.CreateAccessId > 0))) BEGIN
 		--** Get ACL Information
 		--SELECT @ACLUserID = UserId, @UserGUID = @UserGUID, @CreatedAccessId = AL.CreateAccessId  FROM [GEN].fxGetAccessLevel('CREATE','RSU','Seasons') AS AL WHERE (AL.CreateAccessId > 0)
 
 		--** Check that there is a user
-		SELECT TOP 1 @UserGUID = UserGuidIDMasked FROM [GEN].fxGetUserInfo();
+		SELECT TOP 1
+			@UserGUID = UserGuidIDMasked
+		FROM [GEN].fxGetUserInfo();
 
 		RAISERROR ('[50100]:The user "%s" does not have CREATE privileges on table "%s".'
            , 18 -- Severity,
@@ -71,14 +98,15 @@ BEGIN
 		   , N'[RSU].[Seasons]');
 
 		RETURN;
-	 END
+	END
 
-	 /************
+	/************
 	 * CREATE ROW
 	 ************/
-	 INSERT INTO RSU.Seasons (
+	INSERT INTO RSU.Seasons
+		(
 		[PreSeasonID]
-		, [DealerId]
+		, [DealerTenantId]
 		, [SeasonName]
 		, [StartDate]
 		, [EndDate]
@@ -99,8 +127,10 @@ BEGIN
 		, [IsActive]
 		, [ModifiedById]
 		, [CreatedById]
-	 )VALUES (
-		@PreSeasonID
+		)
+	VALUES
+		(
+			@PreSeasonID
 		, @DealerId
 		, @SeasonName
 		, @StartDate
@@ -124,11 +154,12 @@ BEGIN
 		, @CreatedById
 	 );
 
-	 /*************
+	/*************
 	 * Return ROW
 	 **************/
-	 SELECT * FROM RSU.Seasons
-		WHERE
+	SELECT *
+	FROM RSU.Seasons
+	WHERE
 		(SeasonID = SCOPE_IDENTITY());
 
 END;

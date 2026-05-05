@@ -8,6 +8,7 @@
  * Created: 2026-03-13
  * Modified: 2026-05-05 — Added DefaultTimeZoneId (FK to MAC.PoliticalTimeZones)
  * Modified: 2026-05-05 — Renamed to PoliticalTimeZoneId, NOT NULL, default 4
+ * Modified: 2026-05-05 — Added DealerPrefix, SquareMedLogoPath, DealerRootSettingsJson (from ACC.Dealers)
  ******************************************************************************/
 
 IF NOT EXISTS (SELECT *
@@ -23,6 +24,9 @@ BEGIN
 		[PartKey] [varchar](6) NOT NULL,
 		[DealerTenantName] [nvarchar](100) NOT NULL,
 		[DealerTenantDescription] [nvarchar](max) NULL,
+		[DealerPrefix] [char](3) NOT NULL,
+		[SquareMedLogoPath] [nvarchar](max) NOT NULL,
+		[DealerRootSettingsJson] [nvarchar](max) NOT NULL,
 		[IsActive] [bit] NOT NULL,
 		[IsDeleted] [bit] NOT NULL,
 		[ModifiedDate] [datetimeoffset](7) NOT NULL,
@@ -90,4 +94,25 @@ IF NOT EXISTS (SELECT *
 FROM sys.objects
 WHERE name = 'DF_Tenants_DEX_ROW_TS' AND type = 'D')
     ALTER TABLE [ACC].[DealerTenants] ADD CONSTRAINT [DF_Tenants_DEX_ROW_TS]  DEFAULT (sysdatetimeoffset()) FOR [DEX_ROW_TS];
+GO
+
+IF NOT EXISTS (SELECT 1
+FROM sys.columns
+WHERE object_id = OBJECT_ID('ACC.DealerTenants') AND name = 'DealerPrefix')
+    ALTER TABLE [ACC].[DealerTenants] ADD [DealerPrefix] [char](3) NOT NULL
+        CONSTRAINT [DF_DealerTenants_DealerPrefix] DEFAULT ('NNN');
+GO
+
+IF NOT EXISTS (SELECT 1
+FROM sys.columns
+WHERE object_id = OBJECT_ID('ACC.DealerTenants') AND name = 'SquareMedLogoPath')
+    ALTER TABLE [ACC].[DealerTenants] ADD [SquareMedLogoPath] [nvarchar](max) NOT NULL
+        CONSTRAINT [DF_DealerTenants_SquareMedLogoPath] DEFAULT ('N%C3%BAvol9Head.png');
+GO
+
+IF NOT EXISTS (SELECT 1
+FROM sys.columns
+WHERE object_id = OBJECT_ID('ACC.DealerTenants') AND name = 'DealerRootSettingsJson')
+    ALTER TABLE [ACC].[DealerTenants] ADD [DealerRootSettingsJson] [nvarchar](max) NOT NULL
+        CONSTRAINT [DF_DealerTenants_DealerRootSettingsJson] DEFAULT (N'{}');
 GO

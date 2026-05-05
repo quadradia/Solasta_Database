@@ -12,7 +12,7 @@
  *              the form submission.
  * Author:
  * Created: 2026-05-04
- * Dependencies: QAL.Leads, AFL.CampaignPlacements, AFL.TokenClicks, ACC.Dealers
+ * Dependencies: QAL.Leads, AFL.CampaignPlacements, AFL.TokenClicks, ACC.DealerTenants
  ******************************************************************************/
 
 IF NOT EXISTS (SELECT *
@@ -22,7 +22,7 @@ BEGIN
     CREATE TABLE [AFL].[LeadAttributions]
     (
         [LeadAttributionID] [bigint] IDENTITY(1,1) NOT NULL,
-        [DealerId] [int] NOT NULL,
+        [DealerTenantId] [int] NOT NULL,
         [LeadId] [bigint] NOT NULL,
         [CampaignPlacementId] [int] NOT NULL,
         [TokenClickId] [bigint] NULL,
@@ -130,10 +130,10 @@ GO
 
 IF NOT EXISTS (SELECT *
 FROM sys.foreign_keys
-WHERE name = 'FK_LeadAttributions_Dealers')
-ALTER TABLE [AFL].[LeadAttributions]  WITH CHECK ADD  CONSTRAINT [FK_LeadAttributions_Dealers] FOREIGN KEY([DealerId])
-REFERENCES [ACC].[Dealers] ([DealerID])
+WHERE name = 'FK_LeadAttributions_DealerTenants')
+ALTER TABLE [AFL].[LeadAttributions]  WITH CHECK ADD  CONSTRAINT [FK_LeadAttributions_DealerTenants] FOREIGN KEY([DealerTenantId])
+REFERENCES [ACC].[DealerTenants] ([DealerTenantID])
 GO
 
-ALTER TABLE [AFL].[LeadAttributions] CHECK CONSTRAINT [FK_LeadAttributions_Dealers]
+ALTER TABLE [AFL].[LeadAttributions] CHECK CONSTRAINT [FK_LeadAttributions_DealerTenants]
 GO

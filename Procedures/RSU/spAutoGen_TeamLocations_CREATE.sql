@@ -9,54 +9,75 @@ GO
 **		Date: 10/02/2015 (UTC)
 ***********************************************************************************************************************/
 CREATE   Procedure [RSU].[spAutoGen_TeamLocations_CREATE]
-(
-		@DealerId INT
-		, @CreatedFromTeamLocationId INT
-		, @SeasonId INT
-		, @PoliticalStateId VARCHAR(4)
-		, @PoliticalTimeZoneId INT
-		, @GpSalesTerritoryId VARCHAR(15)
-		, @IvOfficeId INT
-		, @AeOfficeId INT
-		, @MarketId INT
-		, @TeamLocationName NVARCHAR(50)
-		, @Description VARCHAR(50)
-		, @City VARCHAR(50)
-		, @SiteCodeID INT
-		, @IsActive BIT		
-		, @ModifiedDate DATETIMEOFFSET
-		, @ModifiedById UNIQUEIDENTIFIER		
-		, @CreatedDate DATETIMEOFFSET
-		, @CreatedById UNIQUEIDENTIFIER
+	(
+	@DealerId INT
+		,
+	@CreatedFromTeamLocationId INT
+		,
+	@SeasonId INT
+		,
+	@PoliticalStateId VARCHAR(4)
+		,
+	@PoliticalTimeZoneId INT
+		,
+	@GpSalesTerritoryId VARCHAR(15)
+		,
+	@IvOfficeId INT
+		,
+	@AeOfficeId INT
+		,
+	@MarketId INT
+		,
+	@TeamLocationName NVARCHAR(50)
+		,
+	@Description VARCHAR(50)
+		,
+	@City VARCHAR(50)
+		,
+	@SiteCodeID INT
+		,
+	@IsActive BIT
+		,
+	@ModifiedDate DATETIMEOFFSET
+		,
+	@ModifiedById UNIQUEIDENTIFIER
+		,
+	@CreatedDate DATETIMEOFFSET
+		,
+	@CreatedById UNIQUEIDENTIFIER
 )
 AS
 BEGIN
 	/**************
 	 * INITIALIZE
 	 **************/
-	 DECLARE @TeamLocationID INT
+	DECLARE @TeamLocationID INT
 		, @ACLUserID UNIQUEIDENTIFIER = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER)
 		, @UserGUID NVARCHAR(MAX)
 		, @CreatedAccessId SMALLINT;
 
-		/**********************************
+	/**********************************
 		 * SET Modified And Created By IDs
 		 **********************************/
-		IF (@ModifiedById IS NULL OR @ModifiedById = '00000000-0000-0000-0000-000000000000') BEGIN
-			SET @ModifiedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
-		END 
-		IF (@CreatedById IS NULL OR @CreatedById = '00000000-0000-0000-0000-000000000000') BEGIN
-			SET @CreatedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
-		END 
+	IF (@ModifiedById IS NULL OR @ModifiedById = '00000000-0000-0000-0000-000000000000') BEGIN
+		SET @ModifiedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
+	END
+	IF (@CreatedById IS NULL OR @CreatedById = '00000000-0000-0000-0000-000000000000') BEGIN
+		SET @CreatedById = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER);
+	END
 	/*********************
 	 * CHECK ACCESS LEVEL
 	 *********************/
-	 IF (NOT EXISTS(SELECT * FROM [GEN].fxGetAccessLevel('CREATE','RSU','TeamLocations') AS AL WHERE (AL.CreateAccessId > 0))) BEGIN
+	IF (NOT EXISTS(SELECT *
+	FROM [GEN].fxGetAccessLevel('CREATE','RSU','TeamLocations') AS AL
+	WHERE (AL.CreateAccessId > 0))) BEGIN
 		--** Get ACL Information
 		--SELECT @ACLUserID = UserId, @UserGUID = @UserGUID, @CreatedAccessId = AL.CreateAccessId  FROM [GEN].fxGetAccessLevel('CREATE','RSU','TeamLocations') AS AL WHERE (AL.CreateAccessId > 0)
 
 		--** Check that there is a user
-		SELECT TOP 1 @UserGUID = UserGuidIDMasked FROM [GEN].fxGetUserInfo();
+		SELECT TOP 1
+			@UserGUID = UserGuidIDMasked
+		FROM [GEN].fxGetUserInfo();
 
 		RAISERROR ('[50100]:The user "%s" does not have CREATE privileges on table "%s".'
            , 18 -- Severity,
@@ -65,13 +86,14 @@ BEGIN
 		   , N'[RSU].[TeamLocations]');
 
 		RETURN;
-	 END
+	END
 
-	 /************
+	/************
 	 * CREATE ROW
 	 ************/
-	 INSERT INTO RSU.TeamLocations (
-		[DealerId]
+	INSERT INTO RSU.TeamLocations
+		(
+		[DealerTenantId]
 		, [CreatedFromTeamLocationId]
 		, [SeasonId]
 		, [PoliticalStateId]
@@ -87,8 +109,10 @@ BEGIN
 		, [IsActive]
 		, [ModifiedById]
 		, [CreatedById]
-	 )VALUES (
-		@DealerId
+		)
+	VALUES
+		(
+			@DealerId
 		, @CreatedFromTeamLocationId
 		, @SeasonId
 		, @PoliticalStateId
@@ -106,11 +130,12 @@ BEGIN
 		, @CreatedById
 	 );
 
-	 /*************
+	/*************
 	 * Return ROW
 	 **************/
-	 SELECT * FROM RSU.TeamLocations
-		WHERE
+	SELECT *
+	FROM RSU.TeamLocations
+	WHERE
 		(TeamLocationID = SCOPE_IDENTITY());
 
 END;

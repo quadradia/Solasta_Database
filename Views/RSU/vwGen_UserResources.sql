@@ -1,10 +1,12 @@
 ﻿/******************************************************************************
 **		View: [RSU].[vwGen_UserResources]
-**		Desc: 
+**		Desc:
 **		Auth: ANDRES E. SOSA
 **		Date: 10/02/2015 (UTC)
 *******************************************************************************/
-IF EXISTS (SELECT * FROM sys.views WHERE name = 'vwGen_UserResources' AND schema_id = SCHEMA_ID('RSU'))
+IF EXISTS (SELECT *
+FROM sys.views
+WHERE name = 'vwGen_UserResources' AND schema_id = SCHEMA_ID('RSU'))
     DROP VIEW [RSU].[vwGen_UserResources];
 GO
 
@@ -13,7 +15,7 @@ AS
 	-- QUERY VIEW
 	SELECT
 		[RSU].[UserResources].[UserResourceID]
-		, [RSU].[UserResources].[DealerId]
+		, [RSU].[UserResources].[DealerTenantId]
 		, [RSU].[UserResources].[UserId]
 		, [RSU].[UserResources].[UserEmployeeTypeId]
 		, [RSU].[UserResources].[UserResourceAddressId]
@@ -68,7 +70,11 @@ AS
 		, [RSU].[UserResources].[CreatedById]
 	FROM
 		[RSU].[UserResources]
-		INNER JOIN (SELECT TOP 1 * FROM [GEN].fxGetAccessLevel('Read', 'RSU','UserResources') AS ALIN WHERE (ALIN.ReadAccessId >= 1) ORDER BY ALIN.ReadAccessId DESC) AS AL
+		INNER JOIN (SELECT TOP 1
+			*
+		FROM [GEN].fxGetAccessLevel('Read', 'RSU','UserResources') AS ALIN
+		WHERE (ALIN.ReadAccessId >= 1)
+		ORDER BY ALIN.ReadAccessId DESC) AS AL
 		ON
 			((AL.ReadAccessId = 2) OR ([RSU].[UserResources].CreatedById = AL.UserId))
 			AND ([RSU].[UserResources].IsDeleted = 'FALSE')

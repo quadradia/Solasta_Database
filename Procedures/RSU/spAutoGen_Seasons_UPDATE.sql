@@ -9,51 +9,79 @@ GO
 **		Date: 10/02/2015 (UTC)
 ***********************************************************************************************************************/
 CREATE   Procedure [RSU].[spAutoGen_Seasons_UPDATE]
-(
-		@SeasonID INT		
-		, @PreSeasonID INT		
-		, @DealerId INT		
-		, @SeasonName NVARCHAR(50)		
-		, @StartDate DATETIMEOFFSET		
-		, @EndDate DATETIMEOFFSET		
-		, @ShowInHiringManager BIT		
-		, @IsCurrent BIT		
-		, @IsVisibleToRecruits BIT		
-		, @IsInsideSales BIT		
-		, @IsPreseason BIT		
-		, @IsSummer BIT		
-		, @IsExtended BIT		
-		, @IsYearRound BIT		
-		, @IsContractor BIT		
-		, @IsDealer BIT		
-		, @IsCurbNSign BIT		
-		, @ExcellentCreditScoreThreshold INT		
-		, @PassCreditScoreThreshold INT		
-		, @SubCreditScoreThreshold INT		
-		, @IsActive BIT		
-		, @ModifiedDate DATETIMEOFFSET		
-		, @ModifiedById UNIQUEIDENTIFIER		
-		, @CreatedDate DATETIMEOFFSET		
-		, @CreatedById UNIQUEIDENTIFIER
+	(
+	@SeasonID INT
+		,
+	@PreSeasonID INT
+		,
+	@DealerId INT
+		,
+	@SeasonName NVARCHAR(50)
+		,
+	@StartDate DATETIMEOFFSET
+		,
+	@EndDate DATETIMEOFFSET
+		,
+	@ShowInHiringManager BIT
+		,
+	@IsCurrent BIT
+		,
+	@IsVisibleToRecruits BIT
+		,
+	@IsInsideSales BIT
+		,
+	@IsPreseason BIT
+		,
+	@IsSummer BIT
+		,
+	@IsExtended BIT
+		,
+	@IsYearRound BIT
+		,
+	@IsContractor BIT
+		,
+	@IsDealer BIT
+		,
+	@IsCurbNSign BIT
+		,
+	@ExcellentCreditScoreThreshold INT
+		,
+	@PassCreditScoreThreshold INT
+		,
+	@SubCreditScoreThreshold INT
+		,
+	@IsActive BIT
+		,
+	@ModifiedDate DATETIMEOFFSET
+		,
+	@ModifiedById UNIQUEIDENTIFIER
+		,
+	@CreatedDate DATETIMEOFFSET
+		,
+	@CreatedById UNIQUEIDENTIFIER
 )
 AS
 BEGIN
 	/**************
 	 * INITIALIZE
 	 **************/
-	 DECLARE @ACLUserID UNIQUEIDENTIFIER = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER)
+	DECLARE @ACLUserID UNIQUEIDENTIFIER = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER)
 		, @UserGUID NVARCHAR(MAX)
 		, @CreatedAccessId SMALLINT;
 
 	/*********************
 	 * CHECK ACCESS LEVEL
 	 *********************/
-	 IF (NOT EXISTS(SELECT * FROM [GEN].fxGetAccessLevel('UPDATE','RSU','Seasons') AS AL WHERE (AL.UpdateAccessId > 0))) BEGIN
+	IF (NOT EXISTS(SELECT *
+	FROM [GEN].fxGetAccessLevel('UPDATE','RSU','Seasons') AS AL
+	WHERE (AL.UpdateAccessId > 0))) BEGIN
 		--** Get ACL Information
 		--SELECT @ACLUserID = UserId, @UserGUID = @UserGUID, @CreatedAccessId = AL.UpdateAccessId  FROM [GEN].fxGetAccessLevel('UPDATE','RSU','Seasons') AS AL WHERE (AL.UpdateAccessId > 0)
 
 		--** Check that there is a user
-		SELECT TOP 1 @UserGUID = UserGuidIDMasked FROM [GEN].fxGetUserInfo();
+		SELECT TOP 1
+			@UserGUID = UserGuidIDMasked
+		FROM [GEN].fxGetUserInfo();
 
 		RAISERROR (N'[50120]|The user "%s" does not have UPDATE privileges on table "%s".'
            , 18 -- Severity,
@@ -61,14 +89,14 @@ BEGIN
            , @UserGUID
 		   , N'[RSU].[Seasons]');
 		RETURN;
-	 END
+	END
 
-	 /************
+	/************
 	 * UPDATE ROW
 	 ************/
-	 UPDATE RSU.Seasons SET
+	UPDATE RSU.Seasons SET
 		[PreSeasonID] = @PreSeasonID
-		, [DealerId] = @DealerId
+		, [DealerTenantId] = @DealerId
 		, [SeasonName] = @SeasonName
 		, [StartDate] = @StartDate
 		, [EndDate] = @EndDate
@@ -92,11 +120,12 @@ BEGIN
 	 WHERE
 		(SeasonID = @SeasonID);
 
-	 /**************
+	/**************
 	 * RETURN ROW
 	 **************/
-	 SELECT * FROM RSU.Seasons
-	 WHERE
+	SELECT *
+	FROM RSU.Seasons
+	WHERE
 		(SeasonID = @SeasonID);
 
 END;

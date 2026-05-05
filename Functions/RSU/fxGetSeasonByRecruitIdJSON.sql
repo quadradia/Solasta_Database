@@ -41,7 +41,7 @@ BEGIN
 		SELECT
 			URS.SeasonId AS id
 			, S.PreSeasonID AS preSeasonID
-			, S.DealerId AS dealerId
+			, S.DealerTenantId AS dealerId
 			, S.SeasonName AS seasonName
 			, S.StartDate AS startDate
 			, S.EndDate AS endDate

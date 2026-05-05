@@ -9,102 +9,181 @@ GO
 **		Date: 10/02/2015 (UTC)
 ***********************************************************************************************************************/
 CREATE   Procedure [RSU].[spAutoGen_UserRecruits_UPDATE]
-(
-		@UserRecruitID INT		
-		, @UserResourceId INT		
-		, @UserTypeId SMALLINT		
-		, @ReportsToId INT		
-		, @UserRecruitAddressId INT		
-		, @DealerId INT		
-		, @SeasonId INT		
-		, @OwnerApprovalId INT		
-		, @TeamId INT		
-		, @PayScaleId INT		
-		, @SchoolId SMALLINT		
-		, @ShackingUpId INT		
-		, @UserRecruitCohabbitTypeId INT		
-		, @AlternatePayScheduleId INT		
-		, @Location NVARCHAR(50)		
-		, @OwnerApprovalDate DATETIMEOFFSET		
-		, @ManagerApprovalDate DATETIMEOFFSET		
-		, @EmergencyName NVARCHAR(50)		
-		, @EmergencyPhone VARCHAR(20)		
-		, @EmergencyRelationship NVARCHAR(50)		
-		, @IsRecruiter BIT		
-		, @PreviousSummer NVARCHAR(200)		
-		, @SignatureDate DATETIMEOFFSET		
-		, @HireDate DATETIMEOFFSET		
-		, @GPExemptions INT		
-		, @GPW4Allowances TINYINT		
-		, @GPW9Name NVARCHAR(50)		
-		, @GPW9BusinessName NVARCHAR(100)		
-		, @GPW9TIN VARCHAR(50)		
-		, @SocialSecCardStatusID INT		
-		, @DriversLicenseStatusID INT		
-		, @W4StatusID INT		
-		, @I9StatusID INT		
-		, @W9StatusID INT		
-		, @SocialSecCardNotes NVARCHAR(250)		
-		, @DriversLicenseNotes NVARCHAR(250)		
-		, @W4Notes NVARCHAR(250)		
-		, @I9Notes NVARCHAR(250)		
-		, @W9Notes NVARCHAR(250)		
-		, @EIN NVARCHAR(50)		
-		, @SUTA NVARCHAR(50)		
-		, @WorkersComp NVARCHAR(MAX)		
-		, @FedFilingStatus NVARCHAR(50)		
-		, @EICFilingStatus NVARCHAR(50)		
-		, @TaxWitholdingState NVARCHAR(5)		
-		, @StateFilingStatus NVARCHAR(50)		
-		, @GPDependents INT		
-		, @CriminalOffense BIT		
-		, @Offense NVARCHAR(MAX)		
-		, @OffenseExplanation NVARCHAR(MAX)		
-		, @Rent MONEY		
-		, @Pet MONEY		
-		, @Utilities MONEY		
-		, @Fuel MONEY		
-		, @Furniture MONEY		
-		, @CellPhoneCredit MONEY		
-		, @GasCredit MONEY		
-		, @RentExempt BIT		
-		, @IsServiceTech BIT		
-		, @StateId VARCHAR(4)		
-		, @CountryId NVARCHAR(10)		
-		, @StreetAddress NVARCHAR(50)		
-		, @StreetAddress2 NVARCHAR(50)		
-		, @City NVARCHAR(50)		
-		, @PostalCode NVARCHAR(10)		
-		, @CBxSocialSecCard BIT		
-		, @CBxDriversLicense BIT		
-		, @CBxW4 BIT		
-		, @CBxI9 BIT		
-		, @CBxW9 BIT		
-		, @PersonalMultiple INT		
-		, @IsActive BIT		
-		, @CreatedById UNIQUEIDENTIFIER		
-		, @CreatedDate DATETIMEOFFSET		
-		, @ModifiedById UNIQUEIDENTIFIER		
-		, @ModifiedDate DATETIMEOFFSET
+	(
+	@UserRecruitID INT
+		,
+	@UserResourceId INT
+		,
+	@UserTypeId SMALLINT
+		,
+	@ReportsToId INT
+		,
+	@UserRecruitAddressId INT
+		,
+	@DealerId INT
+		,
+	@SeasonId INT
+		,
+	@OwnerApprovalId INT
+		,
+	@TeamId INT
+		,
+	@PayScaleId INT
+		,
+	@SchoolId SMALLINT
+		,
+	@ShackingUpId INT
+		,
+	@UserRecruitCohabbitTypeId INT
+		,
+	@AlternatePayScheduleId INT
+		,
+	@Location NVARCHAR(50)
+		,
+	@OwnerApprovalDate DATETIMEOFFSET
+		,
+	@ManagerApprovalDate DATETIMEOFFSET
+		,
+	@EmergencyName NVARCHAR(50)
+		,
+	@EmergencyPhone VARCHAR(20)
+		,
+	@EmergencyRelationship NVARCHAR(50)
+		,
+	@IsRecruiter BIT
+		,
+	@PreviousSummer NVARCHAR(200)
+		,
+	@SignatureDate DATETIMEOFFSET
+		,
+	@HireDate DATETIMEOFFSET
+		,
+	@GPExemptions INT
+		,
+	@GPW4Allowances TINYINT
+		,
+	@GPW9Name NVARCHAR(50)
+		,
+	@GPW9BusinessName NVARCHAR(100)
+		,
+	@GPW9TIN VARCHAR(50)
+		,
+	@SocialSecCardStatusID INT
+		,
+	@DriversLicenseStatusID INT
+		,
+	@W4StatusID INT
+		,
+	@I9StatusID INT
+		,
+	@W9StatusID INT
+		,
+	@SocialSecCardNotes NVARCHAR(250)
+		,
+	@DriversLicenseNotes NVARCHAR(250)
+		,
+	@W4Notes NVARCHAR(250)
+		,
+	@I9Notes NVARCHAR(250)
+		,
+	@W9Notes NVARCHAR(250)
+		,
+	@EIN NVARCHAR(50)
+		,
+	@SUTA NVARCHAR(50)
+		,
+	@WorkersComp NVARCHAR(MAX)
+		,
+	@FedFilingStatus NVARCHAR(50)
+		,
+	@EICFilingStatus NVARCHAR(50)
+		,
+	@TaxWitholdingState NVARCHAR(5)
+		,
+	@StateFilingStatus NVARCHAR(50)
+		,
+	@GPDependents INT
+		,
+	@CriminalOffense BIT
+		,
+	@Offense NVARCHAR(MAX)
+		,
+	@OffenseExplanation NVARCHAR(MAX)
+		,
+	@Rent MONEY
+		,
+	@Pet MONEY
+		,
+	@Utilities MONEY
+		,
+	@Fuel MONEY
+		,
+	@Furniture MONEY
+		,
+	@CellPhoneCredit MONEY
+		,
+	@GasCredit MONEY
+		,
+	@RentExempt BIT
+		,
+	@IsServiceTech BIT
+		,
+	@StateId VARCHAR(4)
+		,
+	@CountryId NVARCHAR(10)
+		,
+	@StreetAddress NVARCHAR(50)
+		,
+	@StreetAddress2 NVARCHAR(50)
+		,
+	@City NVARCHAR(50)
+		,
+	@PostalCode NVARCHAR(10)
+		,
+	@CBxSocialSecCard BIT
+		,
+	@CBxDriversLicense BIT
+		,
+	@CBxW4 BIT
+		,
+	@CBxI9 BIT
+		,
+	@CBxW9 BIT
+		,
+	@PersonalMultiple INT
+		,
+	@IsActive BIT
+		,
+	@CreatedById UNIQUEIDENTIFIER
+		,
+	@CreatedDate DATETIMEOFFSET
+		,
+	@ModifiedById UNIQUEIDENTIFIER
+		,
+	@ModifiedDate DATETIMEOFFSET
 )
 AS
 BEGIN
 	/**************
 	 * INITIALIZE
 	 **************/
-	 DECLARE @ACLUserID UNIQUEIDENTIFIER = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER)
+	DECLARE @ACLUserID UNIQUEIDENTIFIER = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER)
 		, @UserGUID NVARCHAR(MAX)
 		, @CreatedAccessId SMALLINT;
 
 	/*********************
 	 * CHECK ACCESS LEVEL
 	 *********************/
-	 IF (NOT EXISTS(SELECT * FROM [GEN].fxGetAccessLevel('UPDATE','RSU','UserRecruits') AS AL WHERE (AL.UpdateAccessId > 0))) BEGIN
+	IF (NOT EXISTS(SELECT *
+	FROM [GEN].fxGetAccessLevel('UPDATE','RSU','UserRecruits') AS AL
+	WHERE (AL.UpdateAccessId > 0))) BEGIN
 		--** Get ACL Information
 		--SELECT @ACLUserID = UserId, @UserGUID = @UserGUID, @CreatedAccessId = AL.UpdateAccessId  FROM [GEN].fxGetAccessLevel('UPDATE','RSU','UserRecruits') AS AL WHERE (AL.UpdateAccessId > 0)
 
 		--** Check that there is a user
-		SELECT TOP 1 @UserGUID = UserGuidIDMasked FROM [GEN].fxGetUserInfo();
+		SELECT TOP 1
+			@UserGUID = UserGuidIDMasked
+		FROM [GEN].fxGetUserInfo();
 
 		RAISERROR (N'[50120]|The user "%s" does not have UPDATE privileges on table "%s".'
            , 18 -- Severity,
@@ -112,17 +191,17 @@ BEGIN
            , @UserGUID
 		   , N'[RSU].[UserRecruits]');
 		RETURN;
-	 END
+	END
 
-	 /************
+	/************
 	 * UPDATE ROW
 	 ************/
-	 UPDATE RSU.UserRecruits SET
+	UPDATE RSU.UserRecruits SET
 		[UserResourceId] = @UserResourceId
 		, [UserTypeId] = @UserTypeId
 		, [ReportsToId] = @ReportsToId
 		, [UserRecruitAddressId] = @UserRecruitAddressId
-		, [DealerId] = @DealerId
+			, [DealerTenantId] = @DealerId
 		, [SeasonId] = @SeasonId
 		, [OwnerApprovalId] = @OwnerApprovalId
 		, [TeamId] = @TeamId
@@ -194,11 +273,12 @@ BEGIN
 	 WHERE
 		(UserRecruitID = @UserRecruitID);
 
-	 /**************
+	/**************
 	 * RETURN ROW
 	 **************/
-	 SELECT * FROM RSU.UserRecruits
-	 WHERE
+	SELECT *
+	FROM RSU.UserRecruits
+	WHERE
 		(UserRecruitID = @UserRecruitID);
 
 END;

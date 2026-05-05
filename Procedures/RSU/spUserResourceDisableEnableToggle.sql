@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spUserResourceDisableEnableToggle.sql
 **		Name: spUserResourceDisableEnableToggle
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,12 +24,13 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	04/14/2018	AndrÃ©s Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserResourceDisableEnableToggle]
-(
+	(
 	@UserResourceId INT
-	, @IsActive BIT
+	,
+	@IsActive BIT
 )
 AS
 BEGIN
@@ -38,21 +39,27 @@ BEGIN
 
 	/** SECURITY */
 	DECLARE @ContextUserID UNIQUEIDENTIFIER, @DealerId INT;
-	SELECT @ContextUserID = UserID, @DealerId = DealerId FROM [ACC].[fxGetContextUserTable]();
-	
+	SELECT @ContextUserID = UserID, @DealerId = DealerTenantId
+	FROM [ACC].[fxGetContextUserTable]();
+
 	/** VALIDATION CHECK */
-	IF (NOT EXISTS(SELECT TOP(1) 1 FROM [RSU].[UserResources] WHERE DealerId = @DealerId AND UserResourceID = @UserResourceId)) BEGIN
+	IF (NOT EXISTS(SELECT TOP(1)
+		1
+	FROM [RSU].[UserResources]
+	WHERE DealerTenantId = @DealerId AND UserResourceID = @UserResourceId)) BEGIN
 		RAISERROR(N'[30050]:SECURITY VIOLATION.  You do not have access to these resources.', 18, 1);
 		RETURN -1;
 	END
 
 	/** LOCALS */
 	DECLARE @UserID UNIQUEIDENTIFIER;
-	SELECT @UserID = UserId FROM [RSU].[UserResources] WHERE UserResourceID = @UserResourceId;
+	SELECT @UserID = UserId
+	FROM [RSU].[UserResources]
+	WHERE UserResourceID = @UserResourceId;
 
 	BEGIN TRY
 		-- ** STATEMENT
-		UPDATE [RSU].[UserResources] SET 
+		UPDATE [RSU].[UserResources] SET
 			IsActive = @IsActive
 			, ModifiedDate = SYSDATETIMEOFFSET()
 			, ModifiedById = @ContextUserID
@@ -68,9 +75,9 @@ BEGIN
 		DECLARE @Result NVARCHAR(MAX);
 		SELECT @Result = (
 			SELECT
-				UR.UserResourceID AS id
+			UR.UserResourceID AS id
 				, UR.UserResourceID AS userResourceID
-				, UR.DealerId AS dealerId
+				, UR.DealerTenantId AS dealerId
 				, UR.UserId AS userId
 				, UR.UserEmployeeTypeId AS userEmployeeTypeId
 				, UR.UserResourceAddressId AS userResourceAddressId
@@ -127,11 +134,11 @@ BEGIN
 				, UR.CreatedDate AS createdDate
 				, UR.CreatedById AS createdById
 				, JSON_QUERY([ACC].[fxGetUserInfoByUserIdJSONObject](UR.CreatedById), '$') AS createdBy
-			FROM
-				[RSU].[UserResources] AS UR WITH(NOLOCK)
-			WHERE
+		FROM
+			[RSU].[UserResources] AS UR WITH(NOLOCK)
+		WHERE
 				(UR.UserResourceID = @UserResourceId)
-			FOR JSON PATH, INCLUDE_NULL_VALUES);
+		FOR JSON PATH, INCLUDE_NULL_VALUES);
 
 			/** FIX RESULT */
 			SET @Result = SUBSTRING(@Result, 2, LEN(@Result) - 2);

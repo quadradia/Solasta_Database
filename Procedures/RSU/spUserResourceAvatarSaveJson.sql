@@ -5,14 +5,14 @@ GO
 /******************************************************************************
 **		File: spUserResourceAvatarSaveJson.sql
 **		Name: spUserResourceAvatarSaveJson
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -25,10 +25,10 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	03/29/2018	AndrÃ©s Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserResourceAvatarSaveJson]
-(
+	(
 	@JsonInput NVARCHAR(MAX)
 )
 AS
@@ -38,21 +38,22 @@ BEGIN
 
 	/** SECURITY */
 	DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerId INT;
-	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerId FROM [ACC].[fxGetContextUserTable]();
+	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerTenantId
+	FROM [ACC].[fxGetContextUserTable]();
 
 	BEGIN TRY
 		/** LOCALS */
 		DECLARE @UserResourceImageID INT, @UserResourceId INT, @ImageTypeId VARCHAR(20), @Size INT, @FileName NVARCHAR(500), @Image NVARCHAR(MAX), @IsActive BIT;
 		SELECT
-			@UserResourceImageID = RT.UserResourceImageID
+		@UserResourceImageID = RT.UserResourceImageID
 			, @UserResourceId = RT.UserResourceId
 			, @ImageTypeId = RT.ImageTypeId
 			, @Size = RT.Size
 			, @FileName = RT.FileName
 			, @Image = RT.Image
 			, @IsActive = RT.IsActive
-		FROM 
-			OPENJSON(@JsonInput, '$')
+	FROM
+		OPENJSON(@JsonInput, '$')
 		WITH (
 			UserResourceImageID INT '$.id'
 			, UserResourceId INT '$.userResourceId'
@@ -64,24 +65,30 @@ BEGIN
 		) AS RT;
 
 		/** SECURITY CHECK */
-		IF (NOT EXISTS(SELECT TOP(1) 1 FROM [RSU].[UserResources] WHERE DealerId = @DealerId AND UserResourceID = @UserResourceId)) BEGIN
-			RAISERROR(N'[30050]:SECURITY VIOLATION:  You do not have access to these resources.', 18, 1);
-			RETURN -1;
-		END
+		IF (NOT EXISTS(SELECT TOP(1)
+		1
+	FROM [RSU].[UserResources]
+	WHERE DealerTenantId = @DealerId AND UserResourceID = @UserResourceId)) BEGIN
+		RAISERROR(N'[30050]:SECURITY VIOLATION:  You do not have access to these resources.', 18, 1);
+		RETURN -1;
+	END
 
 		/** CHECK IF THIS IS an UPDATE Or CREATE */
 		IF (@UserResourceImageID IS NULL) BEGIN
-			PRINT 'CREATING...';
-			INSERT INTO [RSU].[UserResourceImages] (
-				[ImageTypeId]
-				, [UserResourceId]
-				, [Size]
-				, [FileName]
-				, [Image]
-				, [IsActive]
-				, [ModifiedById]
-				, [CreatedById]
-			) VALUES (
+		PRINT 'CREATING...';
+		INSERT INTO [RSU].[UserResourceImages]
+			(
+			[ImageTypeId]
+			, [UserResourceId]
+			, [Size]
+			, [FileName]
+			, [Image]
+			, [IsActive]
+			, [ModifiedById]
+			, [CreatedById]
+			)
+		VALUES
+			(
 				@ImageTypeId -- varchar(20)
 				, @UserResourceId -- int
 				, @Size -- int
@@ -91,10 +98,10 @@ BEGIN
 				, @UserID
 				, @UserID
 			);
-			SET @UserResourceImageID = SCOPE_IDENTITY();
-		END ELSE BEGIN
-			PRINT 'UPDATING...';
-			UPDATE URI SET
+		SET @UserResourceImageID = SCOPE_IDENTITY();
+	END ELSE BEGIN
+		PRINT 'UPDATING...';
+		UPDATE URI SET
 				URI.ImageTypeId = @ImageTypeId -- varchar(20)
 				, URI.UserResourceId = @UserResourceId -- int
 				, URI.Size = @Size -- int
@@ -104,16 +111,16 @@ BEGIN
 				, URI.ModifiedDate = SYSDATETIMEOFFSET()
 				, URI.ModifiedById = @UserID
 			FROM
-				[RSU].[UserResourceImages] AS URI WITH(NOLOCK)
+			[RSU].[UserResourceImages] AS URI WITH(NOLOCK)
 			WHERE
 				(URI.UserResourceImageID = @UserResourceImageID);
-		END;
+	END;
 
 		/** Return result */
 		DECLARE @Result NVARCHAR(MAX);
 		SELECT @Result = (
-			SELECT 
-				URI.UserResourceImageID AS id
+			SELECT
+			URI.UserResourceImageID AS id
 				, URI.UserResourceId AS userResourceId
 				, URI.ImageTypeId AS imageTypeId
 				, URI.Size AS size
@@ -127,11 +134,11 @@ BEGIN
 				, URI.CreatedById AS createdById
 				, JSON_QUERY([ACC].[fxGetUserInfoByUserIdJSONObject](URI.CreatedById), '$') AS createdBy
 				, URI.[Image] AS [image]
-			FROM
-				[RSU].[UserResourceImages] AS URI WITH(NOLOCK)
-			WHERE
+		FROM
+			[RSU].[UserResourceImages] AS URI WITH(NOLOCK)
+		WHERE
 				(URI.UserResourceImageID = @UserResourceImageID)
-			FOR JSON PATH, INCLUDE_NULL_VALUES);
+		FOR JSON PATH, INCLUDE_NULL_VALUES);
 
 		/** Fixt to object */
 		SET @Result = SUBSTRING(@Result, 2, LEN(@Result) - 2);

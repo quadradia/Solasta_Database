@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spAutoACEUtilDropACESPROCS.sql
 **		Name: spAutoACEUtilDropACESPROCS
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,12 +24,13 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	02/01/2018	Andres Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserResourceFullGetByGPEmployeeId]
-(
+	(
 	@GPEmployeeID NVARCHAR(25)
-	, @IgnoreDealerId BIT = 'False'
+	,
+	@IgnoreDealerId BIT = 'False'
 )
 AS
 BEGIN
@@ -39,25 +40,26 @@ BEGIN
 	/** DECLARATIONS */
 	DECLARE @DealerId INT = -1;
 	IF (@IgnoreDealerId = 'False') BEGIN
-		SELECT @DealerId = DealerId FROM [ACC].[fxGetContextUserTable]();
+		SELECT @DealerId = DealerTenantId
+		FROM [ACC].[fxGetContextUserTable]();
 	END;
 
 	PRINT '|** DEALRE ID : ' + CAST(@DealerId AS VARCHAR(20));
-	
+
 	BEGIN TRY
 		-- ** STATEMENT
 		SELECT
-			RU.UserResourceID AS Id
+		RU.UserResourceID AS Id
 			, RU.*
-		FROM
-			[RSU].[UserResources] AS RU WITH(NOLOCK)
-			INNER JOIN [RSU].[UserEmployeeTypes] AS UET WITH(NOLOCK)
-			ON
+	FROM
+		[RSU].[UserResources] AS RU WITH(NOLOCK)
+		INNER JOIN [RSU].[UserEmployeeTypes] AS UET WITH(NOLOCK)
+		ON
 				(UET.UserEmployeeTypeID = RU.UserEmployeeTypeId)
-		WHERE
+	WHERE
 			(RU.GPEmployeeId = @GPEmployeeID)
-			AND ((@IgnoreDealerId = 'True') OR (RU.DealerId = @DealerId))
-			AND (RU.IsDeleted = 'False');
+		AND ((@IgnoreDealerId = 'True') OR (RU.DealerTenantId = @DealerId))
+		AND (RU.IsDeleted = 'False');
 
 	END TRY
 	BEGIN CATCH

@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spUserResourceCoreSaveJsonInput.sql
 **		Name: spUserResourceCoreSaveJsonInput
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,10 +24,10 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	03/06/2018	AndrÃ©s Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserResourceCoreSaveJsonInput]
-(
+	(
 	@JsonInput NVARCHAR(MAX)
 )
 AS
@@ -37,8 +37,9 @@ BEGIN
 
 	/** SECURITY */
 	DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerId INT;
-	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerId FROM [ACC].[fxGetContextUserTable]();
-	
+	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerTenantId
+	FROM [ACC].[fxGetContextUserTable]();
+
 	BEGIN TRY
 		-- ** STATEMENT
 		RAISERROR(N'[30400]:SPROC NOT IMPLEMENTED.  The User Resource Core SAVE has not been implemented yet...', 18, 1);

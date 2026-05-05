@@ -34,7 +34,7 @@ CREATE FUNCTION [CNS].[fxGroupMasterDealersTo2000]
 RETURNS
 @ReturnList TABLE
 (
-	DealerID INT NOT NULL
+	DealerTenantId INT NOT NULL
 )
 WITH SCHEMABINDING
 AS
@@ -45,9 +45,19 @@ BEGIN
 		, @TargetDealerID INT = 2000;
 
 	IF (@CurrentDealerID = @TargetDealerID OR @CurrentDealerID = @RJHDealerID OR @CurrentDealerID = @KLDealerID) BEGIN
-		INSERT INTO @ReturnList ( DealerID ) VALUES ( @TargetDealerID ), ( @RJHDealerID ), ( @KLDealerID ), ( 0 );
+		INSERT INTO @ReturnList
+			( DealerTenantId )
+		VALUES
+			( @TargetDealerID ),
+			( @RJHDealerID ),
+			( @KLDealerID ),
+			( 0 );
 	END ELSE BEGIN
-		INSERT INTO @ReturnList ( DealerID ) VALUES ( @CurrentDealerID ), ( 0 );
+		INSERT INTO @ReturnList
+			( DealerTenantId )
+		VALUES
+			( @CurrentDealerID ),
+			( 0 );
 	END;
 
 	RETURN;

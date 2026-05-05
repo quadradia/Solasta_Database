@@ -1,10 +1,12 @@
 ﻿/******************************************************************************
 **		View: [RSU].[vwGen_Seasons]
-**		Desc: 
+**		Desc:
 **		Auth: ANDRES E. SOSA
 **		Date: 10/02/2015 (UTC)
 *******************************************************************************/
-IF EXISTS (SELECT * FROM sys.views WHERE name = 'vwGen_Seasons' AND schema_id = SCHEMA_ID('RSU'))
+IF EXISTS (SELECT *
+FROM sys.views
+WHERE name = 'vwGen_Seasons' AND schema_id = SCHEMA_ID('RSU'))
     DROP VIEW [RSU].[vwGen_Seasons];
 GO
 
@@ -14,7 +16,7 @@ AS
 	SELECT
 		[RSU].[Seasons].[SeasonID]
 		, [RSU].[Seasons].[PreSeasonID]
-		, [RSU].[Seasons].[DealerId]
+		, [RSU].[Seasons].[DealerTenantId]
 		, [RSU].[Seasons].[SeasonName]
 		, [RSU].[Seasons].[StartDate]
 		, [RSU].[Seasons].[EndDate]
@@ -39,7 +41,11 @@ AS
 		, [RSU].[Seasons].[CreatedById]
 	FROM
 		[RSU].[Seasons]
-		INNER JOIN (SELECT TOP 1 * FROM [GEN].fxGetAccessLevel('Read', 'RSU','Seasons') AS ALIN WHERE (ALIN.ReadAccessId >= 1) ORDER BY ALIN.ReadAccessId DESC) AS AL
+		INNER JOIN (SELECT TOP 1
+			*
+		FROM [GEN].fxGetAccessLevel('Read', 'RSU','Seasons') AS ALIN
+		WHERE (ALIN.ReadAccessId >= 1)
+		ORDER BY ALIN.ReadAccessId DESC) AS AL
 		ON
 			((AL.ReadAccessId = 2) OR ([RSU].[Seasons].CreatedById = AL.UserId))
 			AND ([RSU].[Seasons].IsDeleted = 'FALSE')

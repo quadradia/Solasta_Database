@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spUserResourceBySesonId.sql
 **		Name: spUserResourceBySesonId
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,12 +24,13 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	09/01/2017	Andres Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserResourceBySesonId]
-(
+	(
 	@SeasonId INT = NULL
-	, @UserTypeGroupId VARCHAR(20) = NULL
+	,
+	@UserTypeGroupId VARCHAR(20) = NULL
 )
 AS
 BEGIN
@@ -38,11 +39,14 @@ BEGIN
 
 	/** SECURITY */
 	DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerId INT;
-	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerId FROM [ACC].[fxGetContextUserTable]();
-	
+	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerTenantId
+	FROM [ACC].[fxGetContextUserTable]();
+
 	BEGIN TRY
 		-- ** STATEMENT
-		WITH OnBoardStatusCTE AS
+		WITH
+		OnBoardStatusCTE
+		AS
 		(
 			SELECT
 				UR.UserRecruitID
@@ -59,7 +63,7 @@ BEGIN
 				INNER JOIN [RSU].[Seasons] AS S WITH(NOLOCK)
 				ON
 					(S.SeasonID = @SeasonId)
-					AND (S.DealerId = @DealerId)
+					AND (S.DealerTenantId = @DealerId)
 					AND (S.SeasonID = UR.SeasonId)
 					AND (UR.IsActive = 'True')
 					AND (UR.IsDeleted = 'False')
@@ -79,9 +83,9 @@ BEGIN
 					(UTG.UserTypeGroupID = UT.UserTypeGroupId)
 					AND (@UserTypeGroupId IS NULL OR UT.UserTypeGroupId = @UserTypeGroupId)
 		)
-		SELECT (
-			SELECT 
-				RT.UserRecruitID AS id
+	SELECT (
+			SELECT
+			RT.UserRecruitID AS id
 				, RT.UserResourceID AS userResourceId
 				, RT.SeasonId AS seasonId
 				, RT.UserTypeName AS userTypeName
@@ -90,10 +94,10 @@ BEGIN
 				, RT.UserTypeGroupName AS userTypeGroupName
 				, RT.GPEmployeeId AS gPEmployeeId
 				, RT.FullName + ' (' + RT.GPEmployeeId + ')' AS fullName
-			FROM OnBoardStatusCTE AS RT WITH(NOLOCK)
-			ORDER BY
+		FROM OnBoardStatusCTE AS RT WITH(NOLOCK)
+		ORDER BY
 				RT.FullName
-			FOR JSON PATH) AS JsonOutPutMethod
+		FOR JSON PATH) AS JsonOutPutMethod
 		;
 
 	END TRY

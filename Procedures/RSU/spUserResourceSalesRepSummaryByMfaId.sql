@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spUserResourceSalesRepSummaryByMfaId.sql
 **		Name: spUserResourceSalesRepSummaryByMfaId
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,10 +24,10 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	08/31/2017	Andres Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserResourceSalesRepSummaryByMfaId]
-(
+	(
 	@MasterFileAccountId VARCHAR(50)
 )
 AS
@@ -37,11 +37,14 @@ BEGIN
 
 	/** SECURITY */
 	DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerId INT;
-	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerId FROM [ACC].[fxGetContextUserTable]();
-	
+	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerTenantId
+	FROM [ACC].[fxGetContextUserTable]();
+
 	BEGIN TRY
 		-- ** STATEMENT
-		WITH MfaRootCTE AS
+		WITH
+		MfaRootCTE
+		AS
 		(
 			SELECT
 				MFA.*
@@ -54,10 +57,13 @@ BEGIN
 				(MFA.MasterFileAccountID = @MasterFileAccountId)
 		)
 		--SELECT * FROM MfaRootCTE;
-		, CmeRootCte AS (
-			SELECT TOP 1 
+		,
+		CmeRootCte
+		AS
+		(
+			SELECT TOP 1
 				--CMA.MasAccountCommissionID
-                CMA.UserResourceId AS userResourceID
+				CMA.UserResourceId AS userResourceID
 				, URR.UserRecruitID AS userRecruitId
 				, UR.GPEmployeeId AS gpEmployeeId
 				, UR.FullName AS fullName
@@ -69,8 +75,8 @@ BEGIN
                 --, CMA.MasAccountId
                 , CMA.SeasonId AS seasonId
 				, S.SeasonName AS seasonName
-                --, CMA.Position
-                --, CMA.Percentage
+			--, CMA.Position
+			--, CMA.Percentage
 			FROM
 				[CME].[MasAccountCommissions] AS CMA WITH(NOLOCK)
 				INNER JOIN [RSU].[UserResources] AS UR WITH(NOLOCK)
@@ -88,30 +94,30 @@ BEGIN
 				AND (CMA.Position = 1)
 				AND (CMA.IsDeleted = 'False')
 		)
-		SELECT
-			(SELECT
-				RC.*
+	SELECT
+		(SELECT
+			RC.*
 				, (SELECT
-					URR.UserRecruitID AS id
+				URR.UserRecruitID AS id
 					, URR.UserTypeId AS userTypeId
 					, UT.UserTypeGroupId AS userTypeGroupId
 					, URR.SeasonId AS seasonId
-					, URR.DealerId AS dealerId
+				, URR.DealerTenantId AS dealerId
 					, S.SeasonName AS seasonName
-				FROM
-					[RSU].[UserRecruits] AS URR WITH(NOLOCK)
-					INNER JOIN [RSU].[Seasons] AS S WITH(NOLOCK)
-					ON
+			FROM
+				[RSU].[UserRecruits] AS URR WITH(NOLOCK)
+				INNER JOIN [RSU].[Seasons] AS S WITH(NOLOCK)
+				ON
 						(S.SeasonID = URR.SeasonId)
-						AND (URR.UserResourceId = RC.userResourceID)
-					INNER JOIN [RSU].[UserTypes] AS UT WITH(NOLOCK)
-					ON
+					AND (URR.UserResourceId = RC.userResourceID)
+				INNER JOIN [RSU].[UserTypes] AS UT WITH(NOLOCK)
+				ON
 						(UT.UserTypeID = URR.UserTypeId)
-						AND (UT.UserTypeGroupId = 'SALESREPGRP')
-				FOR JSON PATH
+					AND (UT.UserTypeGroupId = 'SALESREPGRP')
+			FOR JSON PATH
 				) AS contracts
-			FROM CmeRootCte AS RC WITH(NOLOCK)
-			FOR JSON PATH) AS JsonOutPutMethod
+		FROM CmeRootCte AS RC WITH(NOLOCK)
+		FOR JSON PATH) AS JsonOutPutMethod
 			;
 	END TRY
 	BEGIN CATCH

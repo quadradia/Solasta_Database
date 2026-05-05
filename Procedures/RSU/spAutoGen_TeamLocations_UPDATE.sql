@@ -9,45 +9,67 @@ GO
 **		Date: 10/02/2015 (UTC)
 ***********************************************************************************************************************/
 CREATE   Procedure [RSU].[spAutoGen_TeamLocations_UPDATE]
-(
-		@TeamLocationID INT		
-		, @DealerId INT		
-		, @CreatedFromTeamLocationId INT		
-		, @SeasonId INT		
-		, @PoliticalStateId VARCHAR(4)		
-		, @PoliticalTimeZoneId INT		
-		, @GpSalesTerritoryId VARCHAR(15)		
-		, @IvOfficeId INT		
-		, @AeOfficeId INT		
-		, @MarketId INT		
-		, @TeamLocationName NVARCHAR(50)		
-		, @Description VARCHAR(50)		
-		, @City VARCHAR(50)		
-		, @SiteCodeID INT		
-		, @IsActive BIT		
-		, @ModifiedDate DATETIMEOFFSET		
-		, @ModifiedById UNIQUEIDENTIFIER		
-		, @CreatedDate DATETIMEOFFSET		
-		, @CreatedById UNIQUEIDENTIFIER
+	(
+	@TeamLocationID INT
+		,
+	@DealerId INT
+		,
+	@CreatedFromTeamLocationId INT
+		,
+	@SeasonId INT
+		,
+	@PoliticalStateId VARCHAR(4)
+		,
+	@PoliticalTimeZoneId INT
+		,
+	@GpSalesTerritoryId VARCHAR(15)
+		,
+	@IvOfficeId INT
+		,
+	@AeOfficeId INT
+		,
+	@MarketId INT
+		,
+	@TeamLocationName NVARCHAR(50)
+		,
+	@Description VARCHAR(50)
+		,
+	@City VARCHAR(50)
+		,
+	@SiteCodeID INT
+		,
+	@IsActive BIT
+		,
+	@ModifiedDate DATETIMEOFFSET
+		,
+	@ModifiedById UNIQUEIDENTIFIER
+		,
+	@CreatedDate DATETIMEOFFSET
+		,
+	@CreatedById UNIQUEIDENTIFIER
 )
 AS
 BEGIN
 	/**************
 	 * INITIALIZE
 	 **************/
-	 DECLARE @ACLUserID UNIQUEIDENTIFIER = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER)
+	DECLARE @ACLUserID UNIQUEIDENTIFIER = CAST(CONTEXT_INFO() AS UNIQUEIDENTIFIER)
 		, @UserGUID NVARCHAR(MAX)
 		, @CreatedAccessId SMALLINT;
 
 	/*********************
 	 * CHECK ACCESS LEVEL
 	 *********************/
-	 IF (NOT EXISTS(SELECT * FROM [GEN].fxGetAccessLevel('UPDATE','RSU','TeamLocations') AS AL WHERE (AL.UpdateAccessId > 0))) BEGIN
+	IF (NOT EXISTS(SELECT *
+	FROM [GEN].fxGetAccessLevel('UPDATE','RSU','TeamLocations') AS AL
+	WHERE (AL.UpdateAccessId > 0))) BEGIN
 		--** Get ACL Information
 		--SELECT @ACLUserID = UserId, @UserGUID = @UserGUID, @CreatedAccessId = AL.UpdateAccessId  FROM [GEN].fxGetAccessLevel('UPDATE','RSU','TeamLocations') AS AL WHERE (AL.UpdateAccessId > 0)
 
 		--** Check that there is a user
-		SELECT TOP 1 @UserGUID = UserGuidIDMasked FROM [GEN].fxGetUserInfo();
+		SELECT TOP 1
+			@UserGUID = UserGuidIDMasked
+		FROM [GEN].fxGetUserInfo();
 
 		RAISERROR (N'[50120]|The user "%s" does not have UPDATE privileges on table "%s".'
            , 18 -- Severity,
@@ -55,13 +77,13 @@ BEGIN
            , @UserGUID
 		   , N'[RSU].[TeamLocations]');
 		RETURN;
-	 END
+	END
 
-	 /************
+	/************
 	 * UPDATE ROW
 	 ************/
-	 UPDATE RSU.TeamLocations SET
-		[DealerId] = @DealerId
+	UPDATE RSU.TeamLocations SET
+		[DealerTenantId] = @DealerId
 		, [CreatedFromTeamLocationId] = @CreatedFromTeamLocationId
 		, [SeasonId] = @SeasonId
 		, [PoliticalStateId] = @PoliticalStateId
@@ -80,11 +102,12 @@ BEGIN
 	 WHERE
 		(TeamLocationID = @TeamLocationID);
 
-	 /**************
+	/**************
 	 * RETURN ROW
 	 **************/
-	 SELECT * FROM RSU.TeamLocations
-	 WHERE
+	SELECT *
+	FROM RSU.TeamLocations
+	WHERE
 		(TeamLocationID = @TeamLocationID);
 
 END;

@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spGetMetaDataJson.sql
 **		Name: spGetMetaDataJson
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,7 +24,7 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	08/30/2017	Andres Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spGetMetaDataJson]
 AS
@@ -34,11 +34,14 @@ BEGIN
 
 	/** SECURITY */
 	DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerId INT;
-	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerId FROM [ACC].[fxGetContextUserTable]();
-	
+	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerTenantId
+	FROM [ACC].[fxGetContextUserTable]();
+
 	BEGIN TRY
 		-- ** STATEMENT
-		WITH UserEmployeeTypesCTE AS
+		WITH
+		UserEmployeeTypesCTE
+		AS
 		(
 			SELECT
 				UTTT.UserEmployeeTypeID AS id
@@ -49,7 +52,10 @@ BEGIN
 				[RSU].[UserEmployeeTypes] AS UTTT WITH(NOLOCK)
 		)
 		--SELECT * FROM UserTypeTeamTypeCTE;
-		, UserTypesCte AS (
+		,
+		UserTypesCte
+		AS
+		(
 			SELECT
 				UT.UserTypeID AS id
                 , UT.UserTypeTeamTypeId AS userTypeTeamTypeId
@@ -66,7 +72,9 @@ BEGIN
 				[RSU].[UserTypes] AS UT
 		)
 		--SELECT * FROM UserTypesCte;
-		, UserTypeGroupsCte AS
+		,
+		UserTypeGroupsCte
+		AS
 		(
 			SELECT
 				UTG.UserTypeGroupID AS id
@@ -77,8 +85,11 @@ BEGIN
 				[RSU].[UserTypeGroups] AS UTG WITH(NOLOCK)
 		)
 		--SELECT * FROM UserTypeGroupsCte;
-		, UserTypeTeamTypesCte AS (
-			SELECT 
+		,
+		UserTypeTeamTypesCte
+		AS
+		(
+			SELECT
 				UT.UserTypeTeamTypeID AS id
                 , UT.UserTypeTeamTypeName AS userTypeTeamTypeName
                 , UT.ParentId AS parentId
@@ -88,7 +99,10 @@ BEGIN
 				[RSU].[UserTypeTeamTypes] AS UT WITH(NOLOCK)
 		)
 		--SELECT * FROM UserTypeTeamTypesCte;
-		, SeasonsCte AS (
+		,
+		SeasonsCte
+		AS
+		(
 			SELECT
 				S.SeasonID AS id
                 , S.PreSeasonID AS preSeasonId
@@ -112,17 +126,32 @@ BEGIN
 			FROM
 				[RSU].[Seasons] AS S WITH(NOLOCK)
 			WHERE
-				(S.DealerId = @DealerId)
+				(S.DealerTenantId = @DealerId)
 				AND (S.IsDeleted = 'False')
 		)
-		SELECT
-			(SELECT
-				(SELECT * FROM UserEmployeeTypesCTE ORDER BY UserEmployeeTypesCTE.userEmployeeTypeName FOR JSON PATH) AS [userEmployeeTypes]
-				, (SELECT * FROM UserTypesCte ORDER BY UserTypesCte.userTypeName FOR JSON PATH) AS [userTypes]
-				, (SELECT * FROM UserTypeGroupsCte ORDER BY UserTypeGroupsCte.userTypeGroupName FOR JSON PATH) AS [userTypeGroups]
-				, (SELECT * FROM userTypeTeamTypesCte ORDER BY UserTypeTeamTypesCte.userTypeTeamTypeName FOR JSON PATH) AS [userTypeTeamTypes]
-				, (SELECT * FROM SeasonsCte ORDER BY SeasonsCte.seasonName FOR JSON PATH) AS [seasons]
-			FOR JSON PATH) AS [JsonOutPutMethod];
+	SELECT
+		(SELECT
+			(SELECT *
+			FROM UserEmployeeTypesCTE
+			ORDER BY UserEmployeeTypesCTE.userEmployeeTypeName
+			FOR JSON PATH) AS [userEmployeeTypes]
+				, (SELECT *
+			FROM UserTypesCte
+			ORDER BY UserTypesCte.userTypeName
+			FOR JSON PATH) AS [userTypes]
+				, (SELECT *
+			FROM UserTypeGroupsCte
+			ORDER BY UserTypeGroupsCte.userTypeGroupName
+			FOR JSON PATH) AS [userTypeGroups]
+				, (SELECT *
+			FROM userTypeTeamTypesCte
+			ORDER BY UserTypeTeamTypesCte.userTypeTeamTypeName
+			FOR JSON PATH) AS [userTypeTeamTypes]
+				, (SELECT *
+			FROM SeasonsCte
+			ORDER BY SeasonsCte.seasonName
+			FOR JSON PATH) AS [seasons]
+		FOR JSON PATH) AS [JsonOutPutMethod];
 	END TRY
 	BEGIN CATCH
 		EXEC GEN.spExceptionsThrown;

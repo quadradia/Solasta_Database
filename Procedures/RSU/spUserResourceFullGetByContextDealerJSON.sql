@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spAutoACEUtilDropACESPROCS.sql
 **		Name: spAutoACEUtilDropACESPROCS
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,7 +24,7 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	02/01/2018	Andres Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserResourceFullGetByContextDealerJSON]
 AS
@@ -34,14 +34,15 @@ BEGIN
 
 	/** DECLARATIONS */
 	DECLARE @DealerId INT;
-	SELECT @DealerId = DealerId FROM [ACC].[fxGetContextUserTable]();
-	
+	SELECT @DealerId = DealerTenantId
+	FROM [ACC].[fxGetContextUserTable]();
+
 	BEGIN TRY
 		-- ** STATEMENT
-		SELECT 
-			(SELECT
-				RU.UserResourceID AS id
-				, RU.DealerId AS dealerId
+		SELECT
+		(SELECT
+			RU.UserResourceID AS id
+				, RU.DealerTenantId AS dealerId
 				, RU.UserId AS userId
 				, RU.UserEmployeeTypeId AS userEmployeeTypeId
 				, UET.UserEmployeeTypeName AS userEmployeeTypeName
@@ -95,11 +96,11 @@ BEGIN
 				, RU.IsLocked AS isLocked
 				, RU.IsActive AS isActive
 				, (SELECT
-						URS.UserRecruitID AS id
+				URS.UserRecruitID AS id
 						, URS.UserResourceId AS userResourceId
 						, URS.UserTypeId AS userTypeId
 						, (SELECT
-								UT.UserTypeID AS id
+					UT.UserTypeID AS id
 								, UT.UserTypeTeamTypeId AS userTypeTeamTypeId
 								, UT.UserTypeGroupId AS userTypeGroupId
 								, UTG.UserTypeGroupName AS userTypeGroupName
@@ -115,18 +116,18 @@ BEGIN
 								, UT.ModifiedById AS modifiedById
 								, UT.CreatedDate AS createdDate
 								, UT.CreatedById AS createdById
-							FROM
-								[RSU].[UserTypes] AS UT WITH(NOLOCK)
-								INNER JOIN [RSU].[UserTypeGroups] AS UTG WITH(NOLOCK)
-								ON
+				FROM
+					[RSU].[UserTypes] AS UT WITH(NOLOCK)
+					INNER JOIN [RSU].[UserTypeGroups] AS UTG WITH(NOLOCK)
+					ON
 									(UTG.UserTypeGroupID = UT.UserTypeGroupId)
-							WHERE
+				WHERE
 								(UT.UserTypeID = URS.UserTypeId)
-							FOR JSON PATH, INCLUDE_NULL_VALUES
+				FOR JSON PATH, INCLUDE_NULL_VALUES
 						) AS userType
 						, URS.ReportsToId AS reportsToId
 						, URS.UserRecruitAddressId AS userRecruitAddressId
-						, URS.DealerId AS dealerId
+						, URS.DealerTenantId AS dealerId
 						, URS.SeasonId AS seasonId
 						, JSON_QUERY(RSU.fxGetSeasonByRecruitIdJSON(URS.UserRecruitID), '$') AS season
 						, URS.OwnerApprovalId AS ownerApprovalId
@@ -201,38 +202,38 @@ BEGIN
 						, URS.ModifiedById AS modifiedById
 						, JSON_QUERY([ACC].[fxGetUserInfoByUserIdJSONObject](URS.ModifiedById), '$') AS modifiedBy
 						, URS.ModifiedDate AS modifiedDate
-					FROM
-						[RSU].[UserRecruits] AS URS WITH(NOLOCK)
-						INNER JOIN [RSU].[Seasons] AS S WITH(NOLOCK)
-						ON
-							(S.SeasonID = URS.SeasonId)
-						INNER JOIN [RSU].[UserTypes] AS UT WITH(NOLOCK)
-						ON
-							(UT.UserTypeID = URS.UserTypeId)
-					WHERE
-						(URS.UserResourceId = RU.UserResourceID)
-						AND (URS.IsActive = 'True' AND URS.IsDeleted = 'False')
-					FOR JSON PATH, INCLUDE_NULL_VALUES
-				) AS contracts
 			FROM
-				[RSU].[UserResources] AS RU WITH(NOLOCK)
-				INNER JOIN [ACC].[Users] AS ACCU WITH(NOLOCK)
+				[RSU].[UserRecruits] AS URS WITH(NOLOCK)
+				INNER JOIN [RSU].[Seasons] AS S WITH(NOLOCK)
 				ON
-					(ACCU.UserID = RU.UserId)
-					AND (ACCU.IsActive = 'True' AND ACCU.IsDeleted = 'False')
-				INNER JOIN [RSU].[UserEmployeeTypes] AS UET WITH(NOLOCK)
+							(S.SeasonID = URS.SeasonId)
+				INNER JOIN [RSU].[UserTypes] AS UT WITH(NOLOCK)
 				ON
-					(UET.UserEmployeeTypeID = RU.UserEmployeeTypeId)
-				INNER JOIN [RSU].[UserResourceAddresses] AS URA WITH(NOLOCK)
-				ON
-					(URA.UserResourceAddressID = RU.UserResourceAddressId)
+							(UT.UserTypeID = URS.UserTypeId)
 			WHERE
-				(RU.DealerId = @DealerId)
-				AND ((RU.IsActive = 'True') AND (RU.IsDeleted = 'False'))
--- DEBUGGER				AND (RU.GPEmployeeId = 'TIP001')
-			ORDER BY
+						(URS.UserResourceId = RU.UserResourceID)
+				AND (URS.IsActive = 'True' AND URS.IsDeleted = 'False')
+			FOR JSON PATH, INCLUDE_NULL_VALUES
+				) AS contracts
+		FROM
+			[RSU].[UserResources] AS RU WITH(NOLOCK)
+			INNER JOIN [ACC].[Users] AS ACCU WITH(NOLOCK)
+			ON
+					(ACCU.UserID = RU.UserId)
+				AND (ACCU.IsActive = 'True' AND ACCU.IsDeleted = 'False')
+			INNER JOIN [RSU].[UserEmployeeTypes] AS UET WITH(NOLOCK)
+			ON
+					(UET.UserEmployeeTypeID = RU.UserEmployeeTypeId)
+			INNER JOIN [RSU].[UserResourceAddresses] AS URA WITH(NOLOCK)
+			ON
+					(URA.UserResourceAddressID = RU.UserResourceAddressId)
+		WHERE
+					(RU.DealerTenantId = @DealerId)
+			AND ((RU.IsActive = 'True') AND (RU.IsDeleted = 'False'))
+		-- DEBUGGER				AND (RU.GPEmployeeId = 'TIP001')
+		ORDER BY
 				RU.FirstName, RU.LastName
-			FOR JSON PATH, INCLUDE_NULL_VALUES) AS JsonOutputMethod
+		FOR JSON PATH, INCLUDE_NULL_VALUES) AS JsonOutputMethod
 
 	END TRY
 	BEGIN CATCH

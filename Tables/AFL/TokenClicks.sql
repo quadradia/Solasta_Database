@@ -11,7 +11,7 @@
  *              application can attribute the lead back to the correct click.
  * Author:
  * Created: 2026-05-04
- * Dependencies: AFL.CampaignPlacements, ACC.Dealers
+ * Dependencies: AFL.CampaignPlacements, ACC.DealerTenants
  ******************************************************************************/
 
 IF NOT EXISTS (SELECT *
@@ -21,7 +21,7 @@ BEGIN
     CREATE TABLE [AFL].[TokenClicks]
     (
         [TokenClickID] [bigint] IDENTITY(1,1) NOT NULL,
-        [DealerId] [int] NOT NULL,
+        [DealerTenantId] [int] NOT NULL,
         [CampaignPlacementId] [int] NOT NULL,
         [ClickDate] [datetimeoffset](7) NOT NULL,
         [IPAddress] [varchar](45) NULL,
@@ -98,10 +98,10 @@ GO
 
 IF NOT EXISTS (SELECT *
 FROM sys.foreign_keys
-WHERE name = 'FK_TokenClicks_Dealers')
-ALTER TABLE [AFL].[TokenClicks]  WITH CHECK ADD  CONSTRAINT [FK_TokenClicks_Dealers] FOREIGN KEY([DealerId])
-REFERENCES [ACC].[Dealers] ([DealerID])
+WHERE name = 'FK_TokenClicks_DealerTenants')
+ALTER TABLE [AFL].[TokenClicks]  WITH CHECK ADD  CONSTRAINT [FK_TokenClicks_DealerTenants] FOREIGN KEY([DealerTenantId])
+REFERENCES [ACC].[DealerTenants] ([DealerTenantID])
 GO
 
-ALTER TABLE [AFL].[TokenClicks] CHECK CONSTRAINT [FK_TokenClicks_Dealers]
+ALTER TABLE [AFL].[TokenClicks] CHECK CONSTRAINT [FK_TokenClicks_DealerTenants]
 GO

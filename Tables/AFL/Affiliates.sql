@@ -8,7 +8,7 @@
  *              AffiliateCode is set by the application on creation (e.g., "JSMITH").
  * Author:
  * Created: 2026-05-04
- * Dependencies: ACC.Dealers, AFL.AffiliateTypes
+ * Dependencies: ACC.DealerTenants, AFL.AffiliateTypes
  ******************************************************************************/
 
 IF NOT EXISTS (SELECT *
@@ -21,7 +21,7 @@ BEGIN
 		[AffiliateTypeId] [int] NOT NULL,
 		[Proxy] [varchar](100) NOT NULL,
 		[PartKey] [varchar](6) NOT NULL,
-		[DealerId] [int] NOT NULL,
+		[DealerTenantId] [int] NOT NULL,
 		[AffiliateCode] [varchar](20) NOT NULL,
 		[FirstName] [nvarchar](50) NOT NULL,
 		[LastName] [nvarchar](50) NOT NULL,
@@ -95,12 +95,12 @@ GO
 
 IF NOT EXISTS (SELECT *
 FROM sys.foreign_keys
-WHERE name = 'FK_Affiliates_Dealers')
-ALTER TABLE [AFL].[Affiliates]  WITH CHECK ADD  CONSTRAINT [FK_Affiliates_Dealers] FOREIGN KEY([DealerId])
-REFERENCES [ACC].[Dealers] ([DealerID])
+WHERE name = 'FK_Affiliates_DealerTenants')
+ALTER TABLE [AFL].[Affiliates]  WITH CHECK ADD  CONSTRAINT [FK_Affiliates_DealerTenants] FOREIGN KEY([DealerTenantId])
+REFERENCES [ACC].[DealerTenants] ([DealerTenantID])
 GO
 
-ALTER TABLE [AFL].[Affiliates] CHECK CONSTRAINT [FK_Affiliates_Dealers]
+ALTER TABLE [AFL].[Affiliates] CHECK CONSTRAINT [FK_Affiliates_DealerTenants]
 GO
 
 IF NOT EXISTS (SELECT *

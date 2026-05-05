@@ -40,7 +40,7 @@ RETURNS
 	,
     UserIdMasked VARCHAR(50)
 	,
-    DealerId INT
+    DealerTenantId INT
 	,
     FirstName VARCHAR(50)
 	,
@@ -60,12 +60,12 @@ BEGIN
     SET @UserIdMasked = (SELECT 'XXXXXXX-XXXX-XXXX-XXXX-' + RIGHT(CAST(@UserID AS VARCHAR(50)), 12))
 
     INSERT INTO @ReturnList
-        (UserId, RoleId, UserIdMasked, DealerId, FirstName, LastName, Email, RoleName)
+        (UserId, RoleId, UserIdMasked, DealerTenantId, FirstName, LastName, Email, RoleName)
     SELECT
         U.UserId
 		, UR.RoleId
 		, @UserIdMasked
-		, U.DealerId
+		, U.DealerTenantId
 		, U.FirstName
 		, U.LastName
 		, U.Email
@@ -79,7 +79,7 @@ BEGIN
         ON
 			(R.RoleID = UR.RoleId)
     WHERE
-		(U.DealerId = @DealerId);
+		(U.DealerTenantId = @DealerId);
 
     RETURN;
 END

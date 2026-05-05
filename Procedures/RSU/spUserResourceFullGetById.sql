@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spAutoACEUtilDropACESPROCS.sql
 **		Name: spAutoACEUtilDropACESPROCS
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,26 +24,27 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	04/21/2017	Andres Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserResourceFullGetById]
-(
-	@UserResourceId INT = NULL
+    (
+    @UserResourceId INT = NULL
 )
 AS
 BEGIN
-	/** SET NO COUNTING */
-	SET NOCOUNT ON
+    /** SET NO COUNTING */
+    SET NOCOUNT ON
 
-	/** DECLARATIONS */
-	DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50);
-	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked FROM [ACC].[fxGetContextUserTable]();
-	
-	BEGIN TRY
+    /** DECLARATIONS */
+    DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50);
+    SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked
+    FROM [ACC].[fxGetContextUserTable]();
+
+    BEGIN TRY
 		-- ** STATEMENT
 		SELECT
-			RU.UserResourceID
-            , RU.DealerId
+        RU.UserResourceID
+            , RU.DealerTenantId
             , RU.UserId
             , RU.UserEmployeeTypeId
 			, UET.UserEmployeeTypeName
@@ -93,14 +94,14 @@ BEGIN
             , RU.RightToWorkStatusID
             , RU.IsLocked
             , RU.IsActive
-		FROM
-			[RSU].[UserResources] AS RU WITH(NOLOCK)
-			INNER JOIN [RSU].[UserEmployeeTypes] AS UET WITH(NOLOCK)
-			ON
+    FROM
+        [RSU].[UserResources] AS RU WITH(NOLOCK)
+        INNER JOIN [RSU].[UserEmployeeTypes] AS UET WITH(NOLOCK)
+        ON
 				(UET.UserEmployeeTypeID = RU.UserEmployeeTypeId)
-		WHERE
+    WHERE
 			(RU.UserResourceID = @UserResourceId)
-			AND (RU.IsDeleted = 'False');
+        AND (RU.IsDeleted = 'False');
 
 	END TRY
 	BEGIN CATCH

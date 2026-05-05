@@ -53,7 +53,9 @@ BEGIN
 			SET @Result = @LastName + SUBSTRING(@FirstName, 1, @AlphaLength - LEN(@LastName));
 		END
 
-		SELECT @PostFixNumber = COUNT(*) + 1 FROM [RSU].[UserResources] WHERE (DealerId = @DealerId AND GPEmployeeId LIKE @Result + '%');
+		SELECT @PostFixNumber = COUNT(*) + 1
+		FROM [RSU].[UserResources]
+		WHERE (DealerTenantId = @DealerId AND GPEmployeeId LIKE @Result + '%');
 
 		SET @Result = @Result + REPLICATE('0', @NumberLength-LEN(CAST(@PostFixNumber AS VARCHAR))) + CAST(@PostFixNumber AS VARCHAR);
 

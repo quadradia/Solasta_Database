@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spAutoACEUtilDropACESPROCS.sql
 **		Name: spAutoACEUtilDropACESPROCS
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,10 +24,10 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	04/14/2018	Andres Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserResourceSearchFull_JSON]
-(
+	(
 	@JsonInput NVARCHAR(MAX)
 )
 AS
@@ -37,7 +37,8 @@ BEGIN
 
 	/** SECURITY */
 	DECLARE @DealerId INT;
-	SELECT @DealerId = DealerId FROM [ACC].[fxGetContextUserTable]();
+	SELECT @DealerId = DealerTenantId
+	FROM [ACC].[fxGetContextUserTable]();
 
 	/** BUILD ARGS */
 	DECLARE @PhoneNumber VARCHAR(20) = NULL
@@ -49,7 +50,7 @@ BEGIN
 
 	/** Acquire Args */
 	SELECT
-        @PhoneNumber = [UTL].[fxRemovePhoneDecorations](PhoneNumber)
+		@PhoneNumber = [UTL].[fxRemovePhoneDecorations](PhoneNumber)
         , @FirstName = FirstName
         , @LastName = LastName
         , @Email = Email
@@ -67,19 +68,19 @@ BEGIN
 	);
 
 	/** CHECK VALUES */
-	IF (LTRIM(RTRIM(@PhoneNumber)) = '') BEGIN 
+	IF (LTRIM(RTRIM(@PhoneNumber)) = '') BEGIN
 		SET @PhoneNumber = NULL;
 	END;
-	IF (LTRIM(RTRIM(@FirstName)) = '') BEGIN 
+	IF (LTRIM(RTRIM(@FirstName)) = '') BEGIN
 		SET @FirstName = NULL;
 	END;
-	IF (LTRIM(RTRIM(@LastName)) = '') BEGIN 
+	IF (LTRIM(RTRIM(@LastName)) = '') BEGIN
 		SET @LastName = NULL;
 	END;
-	IF (LTRIM(RTRIM(@Email)) = '') BEGIN 
+	IF (LTRIM(RTRIM(@Email)) = '') BEGIN
 		SET @Email = NULL;
 	END;
-	IF (LTRIM(RTRIM(@Street)) = '') BEGIN 
+	IF (LTRIM(RTRIM(@Street)) = '') BEGIN
 		SET @Street = NULL;
 	END;
 
@@ -110,35 +111,46 @@ BEGIN
 
 	/** BUILD QUERY */
 	DECLARE @Result NVARCHAR(MAX);
-	WITH RootCTE AS (
-		SELECT
-			RSU.*
+	WITH
+		RootCTE
+		AS
+		(
+			SELECT
+				RSU.*
 			--, ROW_NUMBER() OVER (PARTITION BY RSU.ID ORDER BY RSU.ID) AS Rwn
-		FROM
-			[RSU].[vwUserResourceFullSearchDataSet] AS RSU WITH(NOLOCK)
-			LEFT OUTER JOIN [ACC].[Users] AS U WITH(NOLOCK)
-			ON
+			FROM
+				[RSU].[vwUserResourceFullSearchDataSet] AS RSU WITH(NOLOCK)
+				LEFT OUTER JOIN [ACC].[Users] AS U WITH(NOLOCK)
+				ON
 				(U.UserID = RSU.UserId)
-			LEFT OUTER JOIN [RSU].[UserResourceAddresses] AS URA WITH(NOLOCK)
-			ON
+				LEFT OUTER JOIN [RSU].[UserResourceAddresses] AS URA WITH(NOLOCK)
+				ON
 				(URA.UserResourceAddressID = RSU.UserResourceAddressId)
-		WHERE
-			(RSU.DealerId IN (SELECT DealerID FROM [CNS].[fxGroupMasterDealersTo2000](@DealerId)))
-			AND ((@PhoneNumber IS NULL OR [UTL].[fxRemovePhoneDecorations](RSU.PhoneHome) = @PhoneNumber)
+			WHERE
+			(RSU.DealerTenantId IN (SELECT DealerTenantId
+				FROM [CNS].[fxGroupMasterDealersTo2000](@DealerId)))
+				AND ((@PhoneNumber IS NULL OR [UTL].[fxRemovePhoneDecorations](RSU.PhoneHome) = @PhoneNumber)
 				OR (@PhoneNumber IS NULL OR [UTL].[fxRemovePhoneDecorations](RSU.PhoneCell) = @PhoneNumber)
 				OR (@PhoneNumber IS NULL OR [UTL].[fxRemovePhoneDecorations](U.PhoneNumber) = @PhoneNumber))
-			AND (@FirstName IS NULL OR RSU.FirstName LIKE @FirstName + '%')
-			AND (@LastName IS NULL OR RSU.LastName LIKE @LastName + '%')
-			AND (@Email IS NULL OR RSU.Email LIKE @Email + '%')
-			AND (@Street IS NULL OR URA.StreetAddress LIKE @Street +'%')
-			AND (@UserResourceId IS NULL OR RSU.Id = @UserResourceId)
-			AND (/*U.IsActive = 'True' AND */U.IsDeleted = 'False')
-	), TotalCountCTE AS (
-		SELECT COUNT(*) AS TotalRows FROM RootCTE
-	), ResourceInfoCTE AS (
-		SELECT
-			RT.ID AS id
-            , RT.DealerId AS dealerId
+				AND (@FirstName IS NULL OR RSU.FirstName LIKE @FirstName + '%')
+				AND (@LastName IS NULL OR RSU.LastName LIKE @LastName + '%')
+				AND (@Email IS NULL OR RSU.Email LIKE @Email + '%')
+				AND (@Street IS NULL OR URA.StreetAddress LIKE @Street +'%')
+				AND (@UserResourceId IS NULL OR RSU.Id = @UserResourceId)
+				AND (/*U.IsActive = 'True' AND */U.IsDeleted = 'False')
+		),
+		TotalCountCTE
+		AS
+		(
+			SELECT COUNT(*) AS TotalRows
+			FROM RootCTE
+		),
+		ResourceInfoCTE
+		AS
+		(
+			SELECT
+				RT.ID AS id
+            , RT.DealerTenantId AS dealerId
             , RT.UserId AS userId
             , RT.UserResourceAddressId AS userResourceAddressId
             , RT.UserEmployeeTypeId AS userEmployeeTypeId
@@ -191,44 +203,49 @@ BEGIN
             , RT.RightToWorkStatusID AS rightToWorkStatusID
             , RT.IsLocked AS isLocked
             , RT.IsActive AS isActive
-		FROM 
-			RootCTE AS RT WITH(NOLOCK)
-		ORDER BY
+			FROM
+				RootCTE AS RT WITH(NOLOCK)
+			ORDER BY
 			RT.FullName
 		OFFSET @OffsetValue ROWS
 		FETCH NEXT @PageSize ROWS ONLY
-	)
+		)
 	-- SELECT * FROM ResourceInfoCTE;
-	SELECT 
-		@Result = (SELECT * FROM ResourceInfoCTE FOR JSON PATH, INCLUDE_NULL_VALUES)
-		, @TotalRows = (SELECT TOP(1) TotalCountCTE.TotalRows FROM  TotalCountCTE ORDER BY TotalCountCTE.TotalRows);
+	SELECT
+		@Result = (SELECT *
+		FROM ResourceInfoCTE
+		FOR JSON PATH, INCLUDE_NULL_VALUES)
+		, @TotalRows = (SELECT TOP(1)
+			TotalCountCTE.TotalRows
+		FROM TotalCountCTE
+		ORDER BY TotalCountCTE.TotalRows);
 
-		/** INIT DATA */
-		DECLARE @TotalPages INT = @TotalRows / @PageSize
+	/** INIT DATA */
+	DECLARE @TotalPages INT = @TotalRows / @PageSize
 			, @Reminder INT =  @TotalRows % @PageSize;
 
-		IF (@Reminder > 0) SET @TotalPages = @TotalPages + 1;
+	IF (@Reminder > 0) SET @TotalPages = @TotalPages + 1;
 
-		/** DISPLAY Pageing Info */
-		DECLARE @Totals NVARCHAR(MAX) = (
+	/** DISPLAY Pageing Info */
+	DECLARE @Totals NVARCHAR(MAX) = (
 			SELECT
-				@TotalPages AS totalPages
+		@TotalPages AS totalPages
 				, @PageSize AS pageSize
 				, @PageNumber AS pageNumber
 				, @TotalRows AS totalRows
-			FOR JSON PATH, INCLUDE_NULL_VALUES);
-		SET @Totals = SUBSTRING(@Totals, 2, LEN(@Totals) - 2);
+	FOR JSON PATH, INCLUDE_NULL_VALUES);
+	SET @Totals = SUBSTRING(@Totals, 2, LEN(@Totals) - 2);
 
-		/** RETURN RESULT */
-		SELECT @Result = (
-			SELECT 
-				JSON_QUERY(@Totals, '$') AS pagingInfo
+	/** RETURN RESULT */
+	SELECT @Result = (
+			SELECT
+			JSON_QUERY(@Totals, '$') AS pagingInfo
 				, JSON_QUERY(@Result, '$') AS resultSet
-			FOR JSON PATH, INCLUDE_NULL_VALUES);
+		FOR JSON PATH, INCLUDE_NULL_VALUES);
 
-		/** FIX RESULT */
-		SET @Result = SUBSTRING(@Result, 2, LEN(@Result) - 2);
-		SELECT @Result AS JsonOutPutMethod;
+	/** FIX RESULT */
+	SET @Result = SUBSTRING(@Result, 2, LEN(@Result) - 2);
+	SELECT @Result AS JsonOutPutMethod;
 
 END
 

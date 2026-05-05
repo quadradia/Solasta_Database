@@ -1,14 +1,14 @@
 ﻿/******************************************************************************
 **		File: vwUserResourceFullSearchDataSet.sql
 **		Name: vwUserResourceFullSearchDataSet
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values: Table of IDs/Ints
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -22,16 +22,18 @@
 **	-----------	---------------	-----------------------------------------------
 **	01/05/2017	Andres Sosa		Created by
 *******************************************************************************/
-IF EXISTS (SELECT * FROM sys.views WHERE name = 'vwUserResourceFullSearchDataSet' AND schema_id = SCHEMA_ID('RSU'))
+IF EXISTS (SELECT *
+FROM sys.views
+WHERE name = 'vwUserResourceFullSearchDataSet' AND schema_id = SCHEMA_ID('RSU'))
     DROP VIEW [RSU].[vwUserResourceFullSearchDataSet];
 GO
 
 CREATE   VIEW [RSU].[vwUserResourceFullSearchDataSet]
 AS
-	-- Enter Query here
-	SELECT
-		RSU.UserResourceID AS ID
-        , RSU.DealerId
+    -- Enter Query here
+    SELECT
+        RSU.UserResourceID AS ID
+        , RSU.DealerTenantId
         , RSU.UserId
 		, RSU.UserResourceAddressId
         , RSU.UserEmployeeTypeId
@@ -48,7 +50,7 @@ AS
         , RSU.LastName
         , RSU.PreferredName
         , ISNULL(RSU.CompanyName, '') AS [CompanyName]
-        , CASE 
+        , CASE
 			WHEN RSU.MaritalStatus = 1 THEN 'Married'
 			WHEN RSU.MaritalStatus IS NULL THEN 'Undefined'
 			ELSE 'Single'
@@ -94,22 +96,22 @@ AS
         , RSU.RightToWorkStatusID
         , RSU.IsLocked
         , RSU.IsActive
-        --, RSU.IsDeleted
-        --, RSU.ModifiedDate
-        --, RSU.ModifiedById
-        --, RSU.CreatedDate
-        --, RSU.CreatedById
-        --, RSU.DEX_ROW_TS
-	FROM
-		[RSU].[UserResources] AS RSU WITH(NOLOCK)
-		INNER JOIN [RSU].[UserEmployeeTypes] AS UET WITH(NOLOCK)
-		ON
+    --, RSU.IsDeleted
+    --, RSU.ModifiedDate
+    --, RSU.ModifiedById
+    --, RSU.CreatedDate
+    --, RSU.CreatedById
+    --, RSU.DEX_ROW_TS
+    FROM
+        [RSU].[UserResources] AS RSU WITH(NOLOCK)
+        INNER JOIN [RSU].[UserEmployeeTypes] AS UET WITH(NOLOCK)
+        ON
 			(UET.UserEmployeeTypeID = RSU.UserEmployeeTypeId)
-			AND (RSU.IsDeleted = 'False')
-		LEFT OUTER JOIN [ACC].[Users] AS U WITH(NOLOCK)
-		ON
+            AND (RSU.IsDeleted = 'False')
+        LEFT OUTER JOIN [ACC].[Users] AS U WITH(NOLOCK)
+        ON
 			(U.UserID = RSU.UserId)
-		LEFT OUTER JOIN [RSU].[UserResourceAddresses] AS URA WITH(NOLOCK)
-		ON
+        LEFT OUTER JOIN [RSU].[UserResourceAddresses] AS URA WITH(NOLOCK)
+        ON
 			(URA.UserResourceAddressID = RSU.UserResourceAddressId)
 GO

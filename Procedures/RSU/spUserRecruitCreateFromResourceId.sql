@@ -4,14 +4,14 @@ GO
 /******************************************************************************
 **		File: spAutoACEUtilDropACESPROCS.sql
 **		Name: spAutoACEUtilDropACESPROCS
-**		Desc: 
+**		Desc:
 **
 **		This template can be customized:
-**              
+**
 **		Return values:
-** 
-**		Called by:   
-**              
+**
+**		Called by:
+**
 **		Parameters:
 **		Input							Output
 **     ----------						-----------
@@ -24,13 +24,15 @@ GO
 **	Date:		Author:			Description:
 **	-----------	---------------	-----------------------------------------------
 **	05/10/2017	Andres Sosa		Created By
-**	
+**
 *******************************************************************************/
 CREATE   Procedure [RSU].[spUserRecruitCreateFromResourceId]
-(
+	(
 	@UserResourceId INT
-	, @SeasonId INT
-	, @UserTypeId INT
+	,
+	@SeasonId INT
+	,
+	@UserTypeId INT
 )
 AS
 BEGIN
@@ -39,18 +41,23 @@ BEGIN
 
 	/** DECLARATIONS */
 	DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @UserDealerId INT;
-	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @UserDealerId = DealerId FROM [ACC].[fxGetContextUserTable]();
-	
+	SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @UserDealerId = DealerTenantId
+	FROM [ACC].[fxGetContextUserTable]();
+
 	/** LOCALS */
 	DECLARE @UserResourceAddressId INT
 		, @UserRecruitAddressId INT
 		, @DealerId INT;
 
 	/** Init */
-	SELECT @DealerId = DealerId, @UserResourceAddressId = UserResourceAddressId FROM [RSU].[UserResources] WHERE (UserResourceID = @UserResourceId);
+	SELECT @DealerId = DealerTenantId, @UserResourceAddressId = UserResourceAddressId
+	FROM [RSU].[UserResources]
+	WHERE (UserResourceID = @UserResourceId);
 
 	/** VALIDATE REQUEST */
-	IF (@UserDealerId <> (SELECT DealerId FROM [RSU].[UserResources] WHERE UserResourceID = @UserResourceId)) BEGIN
+	IF (@UserDealerId <> (SELECT DealerTenantId
+	FROM [RSU].[UserResources]
+	WHERE UserResourceID = @UserResourceId)) BEGIN
 		RAISERROR(N'SECURITY VIOLATION:  Request is comming from a foreign dealer...', 18, 1);
 		RETURN;
 	END
@@ -58,20 +65,21 @@ BEGIN
 	BEGIN TRY
 		-- ** EXECUTE
 		-- ** ** Create UserRecruitAddress
-		INSERT INTO [RSU].[UserRecruitAddresses] (
-			[PoliticalStateId]
-			,[PoliticalCountryId]
-			,[PoliticalTimeZoneId]
-			,[StreetAddress]
-			,[StreetAddress2]
-			,[City]
-			,[PostalCode]
-			,[PlusFour]
-			,[ModifiedById]
-			,[CreatedById]
+		INSERT INTO [RSU].[UserRecruitAddresses]
+		(
+		[PoliticalStateId]
+		,[PoliticalCountryId]
+		,[PoliticalTimeZoneId]
+		,[StreetAddress]
+		,[StreetAddress2]
+		,[City]
+		,[PostalCode]
+		,[PlusFour]
+		,[ModifiedById]
+		,[CreatedById]
 		)
-		SELECT 
-			URA.PoliticalStateId
+	SELECT
+		URA.PoliticalStateId
 			, URA.PoliticalCountryId
 			, URA.PoliticalTimeZoneId
 			, URA.StreetAddress
@@ -81,38 +89,39 @@ BEGIN
 			, URA.PlusFour
 			, @UserID AS ModifiedById
 			, @UserID AS CreatedById
-		FROM
-			[RSU].[UserResourceAddresses] AS URA WITH(NOLOCK)
-		WHERE
+	FROM
+		[RSU].[UserResourceAddresses] AS URA WITH(NOLOCK)
+	WHERE
 			(URA.UserResourceAddressID = @UserResourceAddressId);
 		SET @UserRecruitAddressId = SCOPE_IDENTITY();
 
 		DECLARE @UserRecruitID INT;
-		INSERT INTO [RSU].[UserRecruits] (
-			[UserResourceId]
-			,[UserTypeId]
-			,[UserRecruitAddressId]
-			,[DealerId]
-			,[SeasonId]
-			,[IsRecruiter]
-			,[SignatureDate]
-			,[HireDate]
-			,[SocialSecCardStatusID]
-			,[DriversLicenseStatusID]
-			,[W4StatusID]
-			,[I9StatusID]
-			,[W9StatusID]
-			,[RentExempt]
-			,[IsServiceTech]
-			,[StateId]
-			,[CountryId]
-			,[StreetAddress]
-			,[StreetAddress2]
-			,[City]
-			,[PostalCode]
+		INSERT INTO [RSU].[UserRecruits]
+		(
+		[UserResourceId]
+		,[UserTypeId]
+		,[UserRecruitAddressId]
+		,[DealerTenantId]
+		,[SeasonId]
+		,[IsRecruiter]
+		,[SignatureDate]
+		,[HireDate]
+		,[SocialSecCardStatusID]
+		,[DriversLicenseStatusID]
+		,[W4StatusID]
+		,[I9StatusID]
+		,[W9StatusID]
+		,[RentExempt]
+		,[IsServiceTech]
+		,[StateId]
+		,[CountryId]
+		,[StreetAddress]
+		,[StreetAddress2]
+		,[City]
+		,[PostalCode]
 		)
-		SELECT
-			@UserResourceId
+	SELECT
+		@UserResourceId
 			, @UserTypeId
 			, URA.UserRecruitAddressID
 			, @DealerId
@@ -133,9 +142,9 @@ BEGIN
 			, URA.StreetAddress2
 			, URA.City
 			, URA.PostalCode
-		FROM
-			[RSU].[UserRecruitAddresses] AS URA WITH(NOLOCK)
-		WHERE
+	FROM
+		[RSU].[UserRecruitAddresses] AS URA WITH(NOLOCK)
+	WHERE
 			(URA.UserRecruitAddressID = @UserRecruitAddressId);
 		SET @UserRecruitID = SCOPE_IDENTITY();
 
@@ -152,7 +161,7 @@ BEGIN
         , UR.UserTypeId
         , UR.ReportsToId
         , UR.UserRecruitAddressId
-        , UR.DealerId
+        , UR.DealerTenantId
         , UR.SeasonId
         , UR.OwnerApprovalId
         , UR.TeamId
