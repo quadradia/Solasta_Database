@@ -377,6 +377,85 @@ WHEN NOT MATCHED THEN
     INSERT ([Id], [Name]) VALUES (source.[Id], source.[Name]);
 ```
 
+## Proxy-ID Pattern
+
+The Proxy-ID pattern generates globally unique, typed, partitioned identifiers in the format `{Prefix}:{PartKey}:{GUID}` — e.g., `MSTR:316BD:E2CDF52E-D5CA-468D-A2F4-D8892DAC0EB8`.
+
+This pattern is applied **incrementally**. Apply it to new entity tables as features are added. Do not retrofit all existing tables at once.
+
+> **AUTHORITATIVE PREFIX REGISTRY**: `.github/ProxyID-PrefixRegistry.md` — read this file before creating any new entity type or Proxy-enabled table. It contains all registered prefixes, naming rules, and the step-by-step onboarding checklist.
+
+### Pattern Summary
+
+| Segment | Source | Example |
+|---------|--------|---------|
+| `Prefix` | `*Types` table `Prefix` column (4-char code) | `MSTR` |
+| `PartKey` | `UTL.fxGetPartKey()` — hex encoding of YYYYMM | `316BD` |
+| `GUID` | `CAST(NEWID() AS NVARCHAR(36))` appended by INSERT caller | `E2CDF52E-...` |
+
+### Column Placement Rules
+
+```sql
+-- On *Types tables (prefix SOURCE):
+[Prefix] [varchar](4) NOT NULL,
+CONSTRAINT [UQ_MyEntityTypes_Prefix] UNIQUE ([Prefix])
+
+-- On entity tables (proxy CONSUMER):
+[MyEntityTypeId] [int]          NOT NULL,  -- FK to *Types table
+[Proxy]          [varchar](100) NOT NULL,
+[PartKey]        [varchar](6)   NOT NULL,  -- MUST be VARCHAR(6), never INT
+```
+
+### Infrastructure Prerequisites
+
+These five objects must exist before any Proxy-ID generation is possible:
+
+| Object | Schema | Type | File |
+|--------|--------|------|------|
+| `fxGetPartKey` | `UTL` | Scalar Function | `Functions/UTL/fxGetPartKey.sql` |
+| `vwTableTypesAndPrefixes` | `MAC` | View | `Views/MAC/vwTableTypesAndPrefixes.sql` |
+| `fxGeneratePrefixParts` | `MAC` | TVF | `Functions/MAC/fxGeneratePrefixParts.sql` |
+| `fxGeneratePrefixProxy` | `MAC` | Scalar Function | `Functions/MAC/fxGeneratePrefixProxy.sql` |
+| `fxGetPrefixTypeIdFromProxy` | `MAC` | TVF | `Functions/MAC/fxGetPrefixTypeIdFromProxy.sql` |
+
+### INSERT Template
+
+```sql
+-- Generate proxy in a stored procedure INSERT:
+DECLARE @Proxy VARCHAR(100) = (
+    SELECT [MAC].[fxGeneratePrefixProxy]('MyEntity', @MyEntityTypeId)
+) + CAST(NEWID() AS NVARCHAR(36));
+
+-- Extract PartKey from the generated proxy for storage:
+DECLARE @PartKey VARCHAR(6) = SUBSTRING(@Proxy, CHARINDEX(':', @Proxy) + 1, CHARINDEX(':', @Proxy, CHARINDEX(':', @Proxy) + 1) - CHARINDEX(':', @Proxy) - 1);
+
+INSERT INTO [schema].[MyEntities]
+    ([MyEntityTypeId], [Proxy], [PartKey], ...)
+VALUES
+    (@MyEntityTypeId, @Proxy, @PartKey, ...);
+```
+
+### New Entity Checklist
+
+When creating a new Proxy-enabled entity, complete ALL six steps:
+
+1. **Register the prefix** — add it to `.github/ProxyID-PrefixRegistry.md` (check for collisions first)
+2. **`*Types` table** — add `[Prefix] VARCHAR(4) NOT NULL` + `UNIQUE` constraint
+3. **`vwTableTypesAndPrefixes`** — add a `UNION` block for the new type table
+4. **`fxGeneratePrefixParts`** — add an `ELSE IF (@TypeName = 'MyEntity')` branch
+5. **Entity table** — add `[Proxy] VARCHAR(100) NOT NULL` and `[PartKey] VARCHAR(6) NOT NULL`
+6. **Seed data migration** — INSERT type rows with correct `Prefix` values
+
+### Proxy-ID Anti-Patterns
+
+❌ Never put `Proxy` or `PartKey` on a `*Types` table — type tables only hold the `Prefix` definition  
+❌ Never declare `PartKey` as `INT` — it stores hex strings like `316BD`  
+❌ Never hardcode prefix strings in procedures — always call `MAC.fxGeneratePrefixProxy`  
+❌ Never use a prefix that is not registered in `.github/ProxyID-PrefixRegistry.md`  
+❌ Never change a prefix that has been seeded in any deployed environment  
+
+---
+
 ## What NOT to Do
 
 ❌ Never modify deployed migrations

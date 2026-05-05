@@ -488,6 +488,63 @@ Non-compliance results in:
 - PR rejection (automatic for critical violations)
 - Required corrections before merge
 - Documentation in review comments
+
+---
+
+## Article XV: Proxy-ID Architectural Standard
+
+### Section 1: Purpose and Scope
+
+The Proxy-ID pattern is a **mandatory architectural standard** for entity tables requiring globally unique, typed, and partitioned identifiers. It produces human-readable composite keys in the format:
+
+```
+{Prefix}:{PartKey}:{GUID}
+```
+
+This pattern is applied **incrementally** — not retrofitted to all tables at once. Every new entity table that requires a typed unique identifier MUST implement it. Existing tables are onboarded as features evolve.
+
+### Section 2: Inviolable Rules
+
+1. **Prefix Column on Type Tables**: Every `*Types` table for a Proxy-enabled entity MUST have `[Prefix] VARCHAR(4) NOT NULL` with a `UNIQUE` constraint.
+
+2. **No Proxy/PartKey on Type Tables**: Type tables define prefixes. They do NOT have `Proxy` or `PartKey` columns. Only entity tables carry these columns.
+
+3. **PartKey is VARCHAR(6), Never INT**: The `PartKey` column on entity tables is a 5-character hexadecimal string (e.g., `316BD`). Declaring it as `INT` is a constitutional violation.
+
+4. **Prefix Registry is Authoritative**: Before seeding any new prefix value, the prefix MUST be registered in `.github/ProxyID-PrefixRegistry.md`. No prefix may exist in the database without a corresponding registry entry.
+
+5. **Prefixes are Immutable Once Deployed**: A prefix code that has been seeded into any deployed environment may never be changed. It becomes part of all proxy strings for that entity type forever.
+
+6. **GUID Appended by INSERT Callers**: The function `MAC.fxGeneratePrefixProxy` returns `Prefix:PartKey:` (with trailing colon). The calling procedure or statement appends `CAST(NEWID() AS NVARCHAR(36))`. The generation function never appends the GUID.
+
+7. **Infrastructure Objects are Prerequisites**: All five infrastructure objects (`UTL.fxGetPartKey`, `MAC.vwTableTypesAndPrefixes`, `MAC.fxGeneratePrefixParts`, `MAC.fxGeneratePrefixProxy`, `MAC.fxGetPrefixTypeIdFromProxy`) must exist and be current before any entity table can generate proxies.
+
+### Section 3: Column Standard
+
+| Column | Location | Type | Constraint |
+|--------|----------|------|------------|
+| `Prefix` | `*Types` tables | `VARCHAR(4) NOT NULL` | `UNIQUE` |
+| `Proxy` | Entity tables | `VARCHAR(100) NOT NULL` | `UNIQUE` |
+| `PartKey` | Entity tables | `VARCHAR(6) NOT NULL` | Indexed |
+
+### Section 4: Prefix Naming Standard
+
+- 4 uppercase alphanumeric characters (A–Z, 0–9), no special characters
+- Globally unique across the entire database
+- Semantically meaningful — abbreviates the entity subtype
+- First two characters should align with the schema domain (see registry)
+- See `.github/ProxyID-PrefixRegistry.md` for full naming rules and the authoritative prefix table
+
+### Section 5: New Entity Checklist
+
+When adding a new Proxy-enabled entity, all six steps are REQUIRED:
+
+1. ☐ Claim a unique prefix and register it in `.github/ProxyID-PrefixRegistry.md`
+2. ☐ Add `Prefix VARCHAR(4) NOT NULL` + UNIQUE constraint to the `*Types` table
+3. ☐ Add a `UNION` block for the type table to `MAC.vwTableTypesAndPrefixes`
+4. ☐ Add an `ELSE IF` branch to `MAC.fxGeneratePrefixParts`
+5. ☐ Add `Proxy VARCHAR(100) NOT NULL` and `PartKey VARCHAR(6) NOT NULL` to the entity table
+6. ☐ Seed initial type rows with correct prefix values in a data migration
 - Repeated violations: additional training
 
 ---
