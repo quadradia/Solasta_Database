@@ -208,6 +208,62 @@ Before committing, every migration must be:
 - Consider **table partitioning** for very large tables
 - Document **expected performance** in complex queries
 
+### Section 4: Table Column Ordering Standards
+
+**All table definitions — both in schema files and in the physical database — MUST follow this column order:**
+
+| Position | Group | Description |
+|----------|-------|-------------|
+| 1 | **Primary Key** | Identity/PK column(s) always first |
+| 2 | **Foreign Keys** | All FK columns immediately after the PK, grouped together |
+| 3 | **Business Columns** | Payload/domain-specific columns |
+| 4 | **Audit Columns** | Always last — see required set below |
+
+**Required audit column order (bottom of every table):**
+```sql
+[IsActive]      [bit]               NOT NULL,
+[IsDeleted]     [bit]               NOT NULL,
+[ModifiedDate]  [datetimeoffset](7) NOT NULL,
+[ModifiedById]  [int]               NOT NULL,  -- or uniqueidentifier per schema convention
+[CreatedDate]   [datetimeoffset](7) NOT NULL,
+[CreatedById]   [int]               NOT NULL,  -- or uniqueidentifier per schema convention
+[DEX_ROW_TS]    [datetimeoffset](7) NOT NULL
+```
+
+**Special case — `DEX_ROW` surrogate identity:**
+
+Some tables have no natural identity column (e.g., junction/mapping tables with a composite PK). In those cases a `DEX_ROW` column is added as a surrogate row identifier:
+
+```sql
+[DEX_ROW]  [bigint]  IDENTITY(1,1)  NOT NULL
+```
+
+Rules for `DEX_ROW`:
+- **Only present** on tables that have **no other `IDENTITY` column**
+- **Type**: `BIGINT IDENTITY(1,1) NOT NULL` — never `INT`, never nullable
+- **Position**: The absolute **last column** in the table, placed after `DEX_ROW_TS`
+- **Never add `DEX_ROW`** to a table that already has an identity PK column
+
+Full audit tail for a table **without** an identity PK:
+```sql
+[IsActive]      [bit]               NOT NULL,
+[IsDeleted]     [bit]               NOT NULL,
+[ModifiedDate]  [datetimeoffset](7) NOT NULL,
+[ModifiedById]  [int]               NOT NULL,
+[CreatedDate]   [datetimeoffset](7) NOT NULL,
+[CreatedById]   [int]               NOT NULL,
+[DEX_ROW_TS]    [datetimeoffset](7) NOT NULL,
+[DEX_ROW]       [bigint]            IDENTITY(1,1) NOT NULL   -- surrogate identity, last column
+```
+
+**Rules:**
+- ❌ **Never** add FK columns after business or audit columns
+- ❌ **Never** use `ALTER TABLE ... ADD` to append a column that is logically a FK — this physically places it at the end; a table recreation migration is required to restore proper order
+- ❌ **Never** add `DEX_ROW` to a table that already has an `IDENTITY` column
+- ❌ **Never** declare `DEX_ROW` as `INT` — it must be `BIGINT`
+- ✅ When a column added via `ALTER TABLE` violates the ordering standard, a follow-up migration **must** recreate the table in the correct order before the change is committed to any shared environment
+- ✅ The schema file (e.g., `Tables/schema/TableName.sql`) must always reflect the correct constitutional column order, regardless of how the live database currently looks
+
 ---
 
 ## Article VI: Security and Permissions
