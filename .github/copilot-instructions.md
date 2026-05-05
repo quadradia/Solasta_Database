@@ -359,9 +359,19 @@ Include in most tables:
 ```
 
 ### Foreign Key Pattern
+
+**FK column naming**: Singularize the referenced table name, then append `Id`.
+Remove a trailing `s` (or apply standard English singularization) from the table name before appending `Id`.
+
+| Referenced Table | FK Column Name |
+|-----------------|----------------|
+| `PoliticalTimeZones` | `PoliticalTimeZoneId` |
+| `DealerTenantTypes` | `DealerTenantTypeId` |
+| `Users` | `UserId` |
+
 ```sql
-CONSTRAINT FK_Orders_CustomerId 
-    FOREIGN KEY ([CustomerId])
+CONSTRAINT FK_Orders_Customers 
+    FOREIGN KEY ([CustomerId])           -- singular: Customers → CustomerId
     REFERENCES [dbo].[Customers] ([CustomerId])
     ON DELETE CASCADE -- or NO ACTION
 ```

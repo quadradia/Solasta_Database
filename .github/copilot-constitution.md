@@ -157,7 +157,10 @@ These data type rules are law. Do not deviate.
 ### Column Names — Enforce Always
 - PascalCase: `FirstName`, `CreatedDate`, `IsActive`
 - Primary keys: `Id` or `[TableName]Id`
-- Foreign keys: `[ReferencedTable]Id`
+- Foreign keys: Singularize the referenced table name, then append `Id`
+  - Rule: remove a trailing `s` (or apply standard English singularization) from the table name, then append `Id`
+  - Examples: `PoliticalTimeZones` → `PoliticalTimeZoneId` | `DealerTenantTypes` → `DealerTenantTypeId` | `Users` → `UserId`
+  - Override only when the singular form is irregular or ambiguous — document the deviation in a comment
 - Never abbreviate unless universally understood
 
 ---
