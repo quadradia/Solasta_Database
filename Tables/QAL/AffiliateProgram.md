@@ -32,7 +32,7 @@ The affiliate tracking system lives in the **AFL** (Affiliate Marketing) schema 
 | Table | Schema | Purpose |
 |---|---|---|
 | `MediaPlatforms` | AFL | Lookup of supported ad platforms — see [Supported Platforms](#supported-platforms) below |
-| `Affiliates` | AFL | Registered affiliates, each tied to a Dealer with a unique `AffiliateCode` |
+| `Affiliates` | AFL | Registered affiliates, each tied to a `DealerTenant` with a unique `AffiliateCode` |
 | `AffiliateCampaigns` | AFL | Named campaigns created by an affiliate for a specific dealer |
 | `CampaignPlacements` | AFL | One placement per platform per campaign — holds the unique `TrackingToken` |
 | `TokenClicks` | AFL | Immutable log of every click on a tracked ad URL |
@@ -42,7 +42,7 @@ The affiliate tracking system lives in the **AFL** (Affiliate Marketing) schema 
 
 ```
 1. Affiliate registers
-   AFL.Affiliates  (AffiliateCode = "JSMITH", tied to a Dealer)
+   AFL.Affiliates  (AffiliateCode = "JSMITH", tied to a DealerTenant)
 
 2. Affiliate creates a campaign
    AFL.AffiliateCampaigns  (e.g., "Summer 2026 Solar Promo")
@@ -98,5 +98,5 @@ New platforms can be added by inserting a row into `AFL.MediaPlatforms` with a u
 
 ### External Dependencies
 
-- `ACC.Dealers` — affiliates and campaigns are scoped to a specific dealer
+- `ACC.DealerTenants` — affiliates and campaigns are scoped to a specific tenant (`DealerTenantId`)
 - `QAL.Leads` — the lead pipeline that receives the converted prospects 
