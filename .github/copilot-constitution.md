@@ -65,6 +65,8 @@ You must NEVER generate code that does any of the following:
 - ❌ Missing SchemaVersion check in migrations
 - ❌ Missing SchemaVersion insert at end of migrations
 - ❌ Migration files without rollback instructions
+- ❌ PK column named with lowercase `Id` suffix (must be uppercase `ID`: `UserID`, not `UserId`)
+- ❌ FK column named with uppercase `ID` suffix (must be mixed case `Id`: `UserId`, not `UserID`)
 
 ---
 
@@ -103,10 +105,12 @@ You must NEVER generate code that does any of the following:
 
 ### Every Table Must Include
 1. Explicit `NULL` or `NOT NULL` on all columns
-2. Named primary key constraint: `PK_[TableName]`
-3. Named foreign key constraints: `FK_[TableName]_[ReferencedTable]`
-4. Named default constraints: `DF_[TableName]_[ColumnName]`
-5. `GO` statement at end
+2. PK column named as singular table name + `ID` (uppercase): e.g., `AffiliateCampaignID` on `AffiliateCampaigns`
+3. Named primary key constraint: `PK_[TableName]`
+4. FK columns named as singular referenced table name + `Id` (mixed case): e.g., `AffiliateCampaignId` on a child table
+5. Named foreign key constraints: `FK_[TableName]_[ReferencedTable]`
+6. Named default constraints: `DF_[TableName]_[ColumnName]`
+7. `GO` statement at end
 
 ---
 
@@ -156,11 +160,16 @@ These data type rules are law. Do not deviate.
 
 ### Column Names — Enforce Always
 - PascalCase: `FirstName`, `CreatedDate`, `IsActive`
-- Primary keys: `Id` or `[TableName]Id`
-- Foreign keys: Singularize the referenced table name, then append `Id`
-  - Rule: remove a trailing `s` (or apply standard English singularization) from the table name, then append `Id`
-  - Examples: `PoliticalTimeZones` → `PoliticalTimeZoneId` | `DealerTenantTypes` → `DealerTenantTypeId` | `Users` → `UserId`
+- **Primary key columns**: Singularize the table name, then append `ID` (uppercase). This applies to single-column PKs only.
+  - Rule: remove a trailing `s` (or apply standard English singularization) from the table name, then append `ID`
+  - Examples: `AffiliateCampaigns` → `AffiliateCampaignID` | `DealerTenants` → `DealerTenantID` | `Users` → `UserID`
+- **Foreign key columns**: Singularize the referenced table name, then append `Id` (mixed case — capital `I`, lowercase `d`).
+  - Rule: remove a trailing `s` (or apply standard English singularization) from the referenced table name, then append `Id`
+  - Examples: `AffiliateCampaigns` → `AffiliateCampaignId` | `DealerTenants` → `DealerTenantId` | `Users` → `UserId`
   - Override only when the singular form is irregular or ambiguous — document the deviation in a comment
+- The casing difference (`ID` vs `Id`) is intentional and must be respected:
+  - `AffiliateCampaignID` — this IS the PK on `AFL.AffiliateCampaigns`
+  - `AffiliateCampaignId` — this is a FK on a child table referencing `AFL.AffiliateCampaigns`
 - Never abbreviate unless universally understood
 
 ---
