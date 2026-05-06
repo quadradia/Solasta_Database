@@ -15,7 +15,6 @@ BEGIN
 	(
 		[EstimateTypeID] [int] IDENTITY(1,1) NOT NULL,
 		[Prefix] [varchar](4) NOT NULL,
-		[TypeId] [int] NOT NULL,
 		[Name] [nvarchar](100) NOT NULL,
 		[Description] [nvarchar](max) NULL,
 		[IsActive] [bit] NOT NULL,
@@ -28,10 +27,6 @@ BEGIN
 		CONSTRAINT [PK_EstimateTypes] PRIMARY KEY CLUSTERED
 (
 	[EstimateTypeID] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON),
-		CONSTRAINT [UQ_EstimateTypes_TypeId] UNIQUE NONCLUSTERED
-(
-	[TypeId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 	)
 

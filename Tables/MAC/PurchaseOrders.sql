@@ -82,3 +82,23 @@ FROM sys.objects
 WHERE name = 'DF_PurchaseOrders_DEX_ROW_TS' AND type = 'D')
 ALTER TABLE [MAC].[PurchaseOrders] ADD  CONSTRAINT [DF_PurchaseOrders_DEX_ROW_TS]  DEFAULT (sysdatetimeoffset()) FOR [DEX_ROW_TS]
 GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.foreign_keys
+WHERE name = 'FK_PurchaseOrders_Quotes')
+ALTER TABLE [MAC].[PurchaseOrders]  WITH CHECK ADD  CONSTRAINT [FK_PurchaseOrders_Quotes] FOREIGN KEY([QuoteId])
+REFERENCES [MAC].[Quotes] ([QuoteID])
+GO
+
+ALTER TABLE [MAC].[PurchaseOrders] CHECK CONSTRAINT [FK_PurchaseOrders_Quotes]
+GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.foreign_keys
+WHERE name = 'FK_PurchaseOrders_PurchaseOrderTypes')
+ALTER TABLE [MAC].[PurchaseOrders]  WITH CHECK ADD  CONSTRAINT [FK_PurchaseOrders_PurchaseOrderTypes] FOREIGN KEY([PurchaseOrderTypeId])
+REFERENCES [MAC].[PurchaseOrderTypes] ([PurchaseOrderTypeID])
+GO
+
+ALTER TABLE [MAC].[PurchaseOrders] CHECK CONSTRAINT [FK_PurchaseOrders_PurchaseOrderTypes]
+GO

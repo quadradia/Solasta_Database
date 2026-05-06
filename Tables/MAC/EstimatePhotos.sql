@@ -80,3 +80,23 @@ FROM sys.objects
 WHERE name = 'DF_EstimatePhotos_DEX_ROW_TS' AND type = 'D')
 ALTER TABLE [MAC].[EstimatePhotos] ADD  CONSTRAINT [DF_EstimatePhotos_DEX_ROW_TS]  DEFAULT (sysdatetimeoffset()) FOR [DEX_ROW_TS]
 GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.foreign_keys
+WHERE name = 'FK_EstimatePhotos_EstimatePhotoTypes')
+ALTER TABLE [MAC].[EstimatePhotos]  WITH CHECK ADD  CONSTRAINT [FK_EstimatePhotos_EstimatePhotoTypes] FOREIGN KEY([EstimatePhotoTypeId])
+REFERENCES [MAC].[EstimatePhotoTypes] ([EstimatePhotoTypeID])
+GO
+
+ALTER TABLE [MAC].[EstimatePhotos] CHECK CONSTRAINT [FK_EstimatePhotos_EstimatePhotoTypes]
+GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.foreign_keys
+WHERE name = 'FK_EstimatePhotos_Estimates')
+ALTER TABLE [MAC].[EstimatePhotos]  WITH CHECK ADD  CONSTRAINT [FK_EstimatePhotos_Estimates] FOREIGN KEY([EstimateId])
+REFERENCES [MAC].[Estimates] ([EstimateID])
+GO
+
+ALTER TABLE [MAC].[EstimatePhotos] CHECK CONSTRAINT [FK_EstimatePhotos_Estimates]
+GO

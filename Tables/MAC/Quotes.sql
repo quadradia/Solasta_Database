@@ -82,3 +82,23 @@ FROM sys.objects
 WHERE name = 'DF_Quotes_DEX_ROW_TS' AND type = 'D')
 ALTER TABLE [MAC].[Quotes] ADD  CONSTRAINT [DF_Quotes_DEX_ROW_TS]  DEFAULT (sysdatetimeoffset()) FOR [DEX_ROW_TS]
 GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.foreign_keys
+WHERE name = 'FK_Quotes_Estimates')
+ALTER TABLE [MAC].[Quotes]  WITH CHECK ADD  CONSTRAINT [FK_Quotes_Estimates] FOREIGN KEY([EstimateId])
+REFERENCES [MAC].[Estimates] ([EstimateID])
+GO
+
+ALTER TABLE [MAC].[Quotes] CHECK CONSTRAINT [FK_Quotes_Estimates]
+GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.foreign_keys
+WHERE name = 'FK_Quotes_QuoteTypes')
+ALTER TABLE [MAC].[Quotes]  WITH CHECK ADD  CONSTRAINT [FK_Quotes_QuoteTypes] FOREIGN KEY([QuoteTypeId])
+REFERENCES [MAC].[QuoteTypes] ([QuoteTypeID])
+GO
+
+ALTER TABLE [MAC].[Quotes] CHECK CONSTRAINT [FK_Quotes_QuoteTypes]
+GO

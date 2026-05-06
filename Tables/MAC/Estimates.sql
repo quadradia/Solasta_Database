@@ -92,3 +92,13 @@ GO
 
 ALTER TABLE [MAC].[Estimates] CHECK CONSTRAINT [FK_Estimates_Customers]
 GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.foreign_keys
+WHERE name = 'FK_Estimates_EstimateTypes')
+ALTER TABLE [MAC].[Estimates]  WITH CHECK ADD  CONSTRAINT [FK_Estimates_EstimateTypes] FOREIGN KEY([EstimateTypeId])
+REFERENCES [MAC].[EstimateTypes] ([EstimateTypeID])
+GO
+
+ALTER TABLE [MAC].[Estimates] CHECK CONSTRAINT [FK_Estimates_EstimateTypes]
+GO
