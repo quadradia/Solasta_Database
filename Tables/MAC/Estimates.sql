@@ -13,10 +13,10 @@ WHERE name = 'Estimates' AND schema_id = SCHEMA_ID('MAC'))
 BEGIN
 	CREATE TABLE [MAC].[Estimates]
 	(
-		[Id] [bigint] IDENTITY(1,1) NOT NULL,
+		[EstimateID] [bigint] IDENTITY(1,1) NOT NULL,
 		[Proxy] [nvarchar](100) NOT NULL,
 		[PartKey] [varchar](6) NOT NULL,
-		[TypeId] [int] NOT NULL,
+		[EstimateTypeId] [int] NOT NULL,
 		[CustomerId] [bigint] NOT NULL,
 		[EstimateNumber] [nvarchar](50) NOT NULL,
 		[EstimateDate] [date] NOT NULL,
@@ -32,9 +32,9 @@ BEGIN
 		[CreatedDate] [datetimeoffset](7) NOT NULL,
 		[CreatedById] [bigint] NOT NULL,
 		[DEX_ROW_TS] [datetimeoffset](7) NOT NULL,
-		PRIMARY KEY CLUSTERED
+		CONSTRAINT [PK_Estimates] PRIMARY KEY CLUSTERED
 (
-	[Id] ASC
+	[EstimateID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 	)
 
@@ -85,10 +85,10 @@ GO
 
 IF NOT EXISTS (SELECT *
 FROM sys.foreign_keys
-WHERE name = 'FK__Estimates__Custo__245D67DE')
-ALTER TABLE [MAC].[Estimates]  WITH CHECK ADD  CONSTRAINT [FK__Estimates__Custo__245D67DE] FOREIGN KEY([CustomerId])
-REFERENCES [MAC].[Customers] ([Id])
+WHERE name = 'FK_Estimates_Customers')
+ALTER TABLE [MAC].[Estimates]  WITH CHECK ADD  CONSTRAINT [FK_Estimates_Customers] FOREIGN KEY([CustomerId])
+REFERENCES [MAC].[Customers] ([CustomerID])
 GO
 
-ALTER TABLE [MAC].[Estimates] CHECK CONSTRAINT [FK__Estimates__Custo__245D67DE]
+ALTER TABLE [MAC].[Estimates] CHECK CONSTRAINT [FK_Estimates_Customers]
 GO

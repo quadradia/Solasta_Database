@@ -13,10 +13,10 @@ WHERE name = 'EstimatePhotos' AND schema_id = SCHEMA_ID('MAC'))
 BEGIN
 	CREATE TABLE [MAC].[EstimatePhotos]
 	(
-		[Id] [bigint] IDENTITY(1,1) NOT NULL,
+		[EstimatePhotoID] [bigint] IDENTITY(1,1) NOT NULL,
 		[Proxy] [nvarchar](100) NOT NULL,
 		[PartKey] [varchar](6) NOT NULL,
-		[TypeId] [int] NOT NULL,
+		[EstimatePhotoTypeId] [int] NOT NULL,
 		[EstimateId] [bigint] NOT NULL,
 		[PhotoURL] [nvarchar](500) NOT NULL,
 		[Caption] [nvarchar](255) NULL,
@@ -30,9 +30,9 @@ BEGIN
 		[CreatedDate] [datetimeoffset](7) NOT NULL,
 		[CreatedById] [bigint] NOT NULL,
 		[DEX_ROW_TS] [datetimeoffset](7) NOT NULL,
-		PRIMARY KEY CLUSTERED
+		CONSTRAINT [PK_EstimatePhotos] PRIMARY KEY CLUSTERED
 (
-	[Id] ASC
+	[EstimatePhotoID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 	)
 

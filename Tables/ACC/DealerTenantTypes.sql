@@ -2,8 +2,8 @@
  * Object Type: Table
  * Schema: ACC
  * Name: DealerTenantTypes
- * Description: 
- * Author: 
+ * Description:
+ * Author:
  * Created: 2026-03-13
  ******************************************************************************/
 
@@ -21,7 +21,7 @@ CREATE TABLE [ACC].[DealerTenantTypes](
 	[CreatedDate] [datetimeoffset](7) NOT NULL,
 	[CreatedById] [int] NOT NULL,
 	[DEX_ROW_TS] [datetimeoffset](7) NOT NULL,
- CONSTRAINT [PK__TenantTy__3214EC07055BDB73] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_DealerTenantTypes] PRIMARY KEY CLUSTERED
 (
 	[DealerTenantTypeID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
