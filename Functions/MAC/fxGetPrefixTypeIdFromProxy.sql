@@ -82,3 +82,17 @@ BEGIN
     RETURN;
 END
 GO
+
+/** UNIT TESTING */
+-- DECLARE @NuvolUserContectId UNIQUEIDENTIFIER = (SELECT TOP(1) U.UserId
+-- FROM [ACC].[Users] AS U WITH (NOLOCK)
+--     INNER JOIN [ACC].[UserRoles] AS UR WITH (NOLOCK) ON (UR.UserId = U.UserId)
+--     INNER JOIN [ACC].[Roles] AS R WITH (NOLOCK) ON (R.RoleID = UR.RoleId)
+--         AND (R.Name = 'CSR User')
+-- ORDER BY R.RoleID);
+-- EXEC [SEC].[spSetUserContext] @UserId=@NuvolUserContectId;
+DECLARE @TestGuid VARCHAR(36) = 'A1B2C3D4-E5F6-7890-ABCD-EF1234567890';
+DECLARE @Proxy03 VARCHAR(100) = 'AFST:3176D:' + @TestGuid;
+
+SELECT *
+FROM [MAC].[fxGetPrefixTypeIdFromProxy](@Proxy03);
