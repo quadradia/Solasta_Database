@@ -312,6 +312,7 @@ EXEC sp_rename 'MAC.PK_PurchaseOrders',       'PK__Purchase__3214EC07FE47559C', 
 DELETE FROM [dbo].[SchemaVersion] WHERE [MigrationName] = '20260505_1200_FixMACandACC_PKandFKNaming';
 */
 
+/*
              Convention:
                PK column  = singular(TableName) + 'ID'  (uppercase)  e.g. CustomerID
                FK column  = singular(ParentTable) + 'Id' (mixed case) e.g. CustomerId
