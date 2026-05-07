@@ -194,14 +194,26 @@ These data type rules are law. Do not deviate.
 | Migrations | `Migrations/` | (flat) |
 | Scripts | `Scripts/` | `deploy/` or `Rollback/` |
 
-### Schema Subdirectories — Only These Five
-| Schema | Purpose |
-|--------|---------|
-| `dbo` | Core business entities |
-| `app` | Application-specific functionality |
-| `config` | System configuration and settings |
-| `audit` | Audit logging and tracking |
-| `reporting` | Reporting views and procedures |
+### Schema Subdirectories — All Active Schemas
+
+| Schema | Type | Purpose |
+|--------|------|---------|
+| `ACC` | Domain | Accounts, dealer tenants |
+| `AFL` | Domain | Affiliate marketing |
+| `ACE` | Domain | Customer entities (CRM) |
+| `MAS` | Domain | Monitoring & alarm systems |
+| `QAL` | Domain | Qualified leads |
+| `RSU` | Domain | Resources & users |
+| `SEC` | Domain | Security & access control |
+| `CNS` | Domain | Consents |
+| `MAC` | Infrastructure | Master catalog — Proxy-ID registry |
+| `UTL` | Infrastructure | Scalar utility functions |
+| `GEN` | Infrastructure | General / cross-cutting utilities |
+| `dbo` | Legacy | Core business entities |
+| `app` | Legacy | Application-specific functionality |
+| `config` | Legacy | System configuration and settings |
+| `audit` | Legacy | Audit logging and tracking |
+| `reporting` | Legacy | Reporting views and procedures |
 
 ### When Creating Any Object, Always Create Two Files
 1. **Migration file** in `Migrations/YYYYMMDD_HHMM_Description.sql`
@@ -303,7 +315,7 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
     ROLLBACK TRANSACTION;
-    RAISERROR(ERROR_MESSAGE(), 16, 1);
+    THROW;
 END CATCH
 GO
 ```

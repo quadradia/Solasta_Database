@@ -10,7 +10,9 @@ This is the Solasta Lighting backend MS SQL Server database repository. All data
 ### 1. Repository Structure
 - **Two-level organization**: ObjectType → Schema → File
 - **Object types**: Tables, Views, Procedures, Functions, Triggers, Indexes, Constraints, Sequences, Types, Grants, Data, Scripts
-- **Standard schemas**: `dbo`, `app`, `config`, `audit`, `reporting`
+- **Domain schemas** (entity-owning): `ACC` (accounts/tenants), `AFL` (affiliate marketing), `ACE` (customer entities/CRM), `MAS` (monitoring/alarm systems), `QAL` (qualified leads), `RSU` (resources/users), `SEC` (security/access control), `CNS` (consents)
+- **Infrastructure schemas** (shared utilities): `MAC` (master catalog — Proxy-ID registry), `UTL` (scalar utility functions), `GEN` (general/cross-cutting)
+- **Legacy/generic schemas**: `dbo`, `app`, `config`, `audit`, `reporting`
 - Each object type has its own top-level directory with schema subdirectories
 
 ### 2. Migration System
@@ -428,21 +430,72 @@ These five objects must exist before any Proxy-ID generation is possible:
 | `fxGeneratePrefixProxy` | `MAC` | Scalar Function | `Functions/MAC/fxGeneratePrefixProxy.sql` |
 | `fxGetPrefixTypeIdFromProxy` | `MAC` | TVF | `Functions/MAC/fxGetPrefixTypeIdFromProxy.sql` |
 
-### INSERT Template
+### Generation Flow
 
+When a stored procedure creates a new entity row, the proxy is assembled in this order:
+
+```
+1. Caller determines TypeName (e.g., 'Affiliate') and TypeId (e.g., 1)
+        ↓
+2. [MAC].[fxGeneratePrefixParts](@TypeName, @TypeId)
+   - Queries the appropriate *Types table for the Prefix
+   - Calls [UTL].[fxGetPartKey]() for the current PartKey
+   - Returns TABLE (Prefix, PartKey)
+        ↓
+3. [MAC].[fxGeneratePrefixProxy](@TypeName, @TypeId)
+   - Calls fxGeneratePrefixParts internally
+   - Returns the string: "Prefix:PartKey:"   (note trailing colon)
+        ↓
+4. Caller appends CAST(NEWID() AS NVARCHAR(36))
+   - Final Proxy = "Prefix:PartKey:GUID"
+        ↓
+5. Both Proxy and the extracted PartKey are stored on the entity row
+```
+
+### Parsing Flow
+
+To resolve a proxy string back to its components and TypeId:
+
+```
+1. Input: "AFST:3176D:E2CDF52E-D5CA-468D-A2F4-D8892DAC0EB8"
+        ↓
+2. [MAC].[fxGetPrefixTypeIdFromProxy](@Proxy)
+   - Extracts Prefix  = "AFST"
+   - Extracts PartKey = "3176D"
+   - Extracts GUID    = "E2CDF52E-..."
+   - Looks up [MAC].[vwTableTypesAndPrefixes] WHERE Prefix = "AFST"
+   - Returns TABLE (Prefix, PartKey, GuidIdentifier, TypeId, TableName, TypeName)
+        ↓
+3. Caller uses TypeId + PartKey + full Proxy for validated lookups
+```
+
+### INSERT Templates
+
+**Pattern A — scalar helper (preferred):**
 ```sql
--- Generate proxy in a stored procedure INSERT:
 DECLARE @Proxy VARCHAR(100) = (
     SELECT [MAC].[fxGeneratePrefixProxy]('MyEntity', @MyEntityTypeId)
 ) + CAST(NEWID() AS NVARCHAR(36));
 
--- Extract PartKey from the generated proxy for storage:
-DECLARE @PartKey VARCHAR(6) = SUBSTRING(@Proxy, CHARINDEX(':', @Proxy) + 1, CHARINDEX(':', @Proxy, CHARINDEX(':', @Proxy) + 1) - CHARINDEX(':', @Proxy) - 1);
+DECLARE @PartKey VARCHAR(6) = SUBSTRING(@Proxy, CHARINDEX(':', @Proxy) + 1,
+    CHARINDEX(':', @Proxy, CHARINDEX(':', @Proxy) + 1) - CHARINDEX(':', @Proxy) - 1);
 
-INSERT INTO [schema].[MyEntities]
-    ([MyEntityTypeId], [Proxy], [PartKey], ...)
-VALUES
-    (@MyEntityTypeId, @Proxy, @PartKey, ...);
+INSERT INTO [schema].[MyEntities] ([MyEntityTypeId], [Proxy], [PartKey], ...)
+VALUES (@MyEntityTypeId, @Proxy, @PartKey, ...);
+```
+
+**Pattern B — TVF manual assembly (use when you need Prefix/PartKey as separate variables):**
+```sql
+DECLARE @EntityPrefix  VARCHAR(4);
+DECLARE @EntityPartKey VARCHAR(6);
+
+SELECT @EntityPrefix = [Prefix], @EntityPartKey = [PartKey]
+FROM [MAC].[fxGeneratePrefixParts]('MyEntity', @MyEntityTypeId);
+
+DECLARE @Proxy VARCHAR(100) = @EntityPrefix + ':' + @EntityPartKey + ':' + CAST(NEWID() AS NVARCHAR(36));
+
+INSERT INTO [schema].[MyEntities] ([MyEntityTypeId], [Proxy], [PartKey], ...)
+VALUES (@MyEntityTypeId, @Proxy, @EntityPartKey, ...);
 ```
 
 ### New Entity Checklist
@@ -464,6 +517,29 @@ When creating a new Proxy-enabled entity, complete ALL six steps:
 ❌ Never use a prefix that is not registered in `.github/ProxyID-PrefixRegistry.md`  
 ❌ Never change a prefix that has been seeded in any deployed environment  
 
+### Validation Join Pattern
+
+When looking up an entity by proxy, always combine `PartKey` AND `TypeId` to prevent cross-type collisions:
+
+```sql
+INNER JOIN [MAC].[fxGetPrefixTypeIdFromProxy](@EntityProxy) AS PX
+    ON  (PX.[PartKey] = E.[PartKey])
+    AND (PX.[TypeId]  = E.[EntityTypeId])
+WHERE (E.[Proxy] = @EntityProxy)
+```
+
+Never look up by `Proxy` string alone without validating the `TypeId`.
+
+### Key Design Principles
+
+When designing or reviewing Proxy-enabled entities, enforce these principles:
+
+1. **No integer PKs in public contracts.** External systems (APIs, cross-service calls) only ever see the Proxy string — never the raw `INT` primary key.
+2. **Type safety.** The `Prefix` encodes the subtype; the `TypeId` validates it on lookup. A proxy for an Affiliate cannot be used to look up a DealerTenant.
+3. **Time-partitioned.** The `PartKey` embeds creation year+month, enabling range-based queries and data lifecycle management without parsing GUIDs.
+4. **Decentralized prefix definition.** Prefixes live in domain-owned `*Types` tables, not a single global enum — keeping schema boundaries clean.
+5. **Idempotent lookups.** Storing the full `Proxy` string on the row allows direct equality lookups; storing `PartKey` separately as its own column enables indexed partition filtering.
+
 ---
 
 ## What NOT to Do
@@ -481,19 +557,20 @@ When creating a new Proxy-enabled entity, complete ALL six steps:
 
 ## When Asked to Add Database Objects
 
-1. **Determine the schema** - Which schema does this belong to? (dbo, app, config, audit, reporting)
+1. **Determine the schema** - Which schema does this belong to? Domain: `ACC`, `AFL`, `ACE`, `MAS`, `QAL`, `RSU`, `SEC`, `CNS` — Infrastructure: `MAC`, `UTL`, `GEN` — Legacy: `dbo`, `app`, `config`, `audit`, `reporting`
 2. **Create the migration** - In `Migrations/` with proper timestamp and description
 3. **Create the schema file** - In appropriate `ObjectType/schema/` directory
 4. **Follow templates** - Use the templates from README files or TEMPLATES.sql
-5. **Include tests** - Suggest test queries to validate the changes
+5. **Include tests** - Suggest test queries; place unit tests in `Scripts/Tests/[ObjectType]/[Schema]/`
 6. **Document dependencies** - List what this depends on or what depends on it
 
 ## File Placement Logic
 
 Ask yourself:
 - What type of object? → Choose directory (Tables, Views, Procedures, etc.)
-- Which schema? → Choose subdirectory (dbo, app, config, audit, reporting)
+- Which schema? → Choose subdirectory (ACC, AFL, MAC, UTL, dbo, app, etc.)
 - Is this a change or new? → Migration needed? Update existing file?
+- Is this a unit test? → `Scripts/Tests/[ObjectType]/[Schema]/[ObjectName]_Tests.sql`
 
 ## Context Awareness
 
