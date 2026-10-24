@@ -88,6 +88,8 @@ cd Data/dbo/
 
 ## Common Schemas
 
+The `DOC` domain manages documents of all kinds, including signed contracts and engineering files such as DXF. Its schema definition is in `Schemas/DOC/schema.sql`, with migration `20261024_1634_CreateDOCSchema`. Document-related objects belong in each object-type directory's `DOC/` subdirectory.
+
 This repository includes the following default schemas:
 
 - **dbo** - Default schema (SQL Server) / public (PostgreSQL)

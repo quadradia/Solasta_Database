@@ -39,6 +39,7 @@ A Proxy-ID takes the form:
 | `AFL` | `AF**` | Affiliate marketing |
 | `AUD` | `AU**` | Audit records |
 | `CME` | `CM**` | Commission & compensation |
+| `DOC` | `DO**` | Document management |
 | `FNE` | `FN**` | Financing & funding |
 | `MAC` | `MA**` | Master catalog (Estimates, Quotes, POs) |
 | `MAS` | `MS**` | Monitoring & alarm systems |
@@ -58,6 +59,7 @@ A Proxy-ID takes the form:
 |--------|--------|----------|------------|-------------|------------|
 | `MSTR` | 1 | Master Tenant | `ACC.DealerTenantTypes` | The master/root dealer tenant | 2026-03-13 |
 | `QUAD` | 2 | Quadradia Tenant | `ACC.DealerTenantTypes` | Quadradia dealer tenant | 2026-03-13 |
+| `SOLA` | 3 | Lighting Company Tenant | `ACC.DealerTenantTypes` | Lighting company with sales reps and technicians | 2026-05-09 |
 
 ### AFL — Affiliate Marketing
 
@@ -66,6 +68,12 @@ A Proxy-ID takes the form:
 | `AFST` | 1 | Standard Affiliate | `AFL.AffiliateTypes` | General-purpose affiliate account | 2026-05-05 |
 | `AFIN` | 2 | Influencer Affiliate | `AFL.AffiliateTypes` | Social media influencer affiliate | 2026-05-05 |
 | `AFPR` | 3 | Partner Affiliate | `AFL.AffiliateTypes` | Business partner affiliate | 2026-05-05 |
+
+### DOC — Document Management
+
+| Prefix | TypeId | TypeName | Type Table | Description | Registered |
+|--------|--------|----------|------------|-------------|------------|
+| `DOCT` | 1 | General Document | `DOC.DocumentTypes` | General-purpose uploaded document, including contracts and engineering files | 2026-10-24 |
 
 ### ACE — Customer Entities
 

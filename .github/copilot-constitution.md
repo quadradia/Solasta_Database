@@ -201,6 +201,7 @@ These data type rules are law. Do not deviate.
 | `ACC` | Domain | Accounts, dealer tenants |
 | `AFL` | Domain | Affiliate marketing |
 | `ACE` | Domain | Customer entities (CRM) |
+| `DOC` | Domain | Document management: signed contracts, engineering/DXF files, and other document formats |
 | `MAS` | Domain | Monitoring & alarm systems |
 | `QAL` | Domain | Qualified leads |
 | `RSU` | Domain | Resources & users |

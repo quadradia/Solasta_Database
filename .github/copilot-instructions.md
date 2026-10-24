@@ -10,7 +10,7 @@ This is the Solasta Lighting backend MS SQL Server database repository. All data
 ### 1. Repository Structure
 - **Two-level organization**: ObjectType → Schema → File
 - **Object types**: Tables, Views, Procedures, Functions, Triggers, Indexes, Constraints, Sequences, Types, Grants, Data, Scripts
-- **Domain schemas** (entity-owning): `ACC` (accounts/tenants), `AFL` (affiliate marketing), `ACE` (customer entities/CRM), `MAS` (monitoring/alarm systems), `QAL` (qualified leads), `RSU` (resources/users), `SEC` (security/access control), `CNS` (consents)
+- **Domain schemas** (entity-owning): `ACC` (accounts/tenants), `AFL` (affiliate marketing), `ACE` (customer entities/CRM), `DOC` (document management: signed contracts, engineering/DXF files, and other document formats), `MAS` (monitoring/alarm systems), `QAL` (qualified leads), `RSU` (resources/users), `SEC` (security/access control), `CNS` (consents)
 - **Infrastructure schemas** (shared utilities): `MAC` (master catalog — Proxy-ID registry), `UTL` (scalar utility functions), `GEN` (general/cross-cutting)
 - **Legacy/generic schemas**: `dbo`, `app`, `config`, `audit`, `reporting`
 - Each object type has its own top-level directory with schema subdirectories
@@ -557,7 +557,7 @@ When designing or reviewing Proxy-enabled entities, enforce these principles:
 
 ## When Asked to Add Database Objects
 
-1. **Determine the schema** - Which schema does this belong to? Domain: `ACC`, `AFL`, `ACE`, `MAS`, `QAL`, `RSU`, `SEC`, `CNS` — Infrastructure: `MAC`, `UTL`, `GEN` — Legacy: `dbo`, `app`, `config`, `audit`, `reporting`
+1. **Determine the schema** - Which schema does this belong to? Domain: `ACC`, `AFL`, `ACE`, `DOC`, `MAS`, `QAL`, `RSU`, `SEC`, `CNS` — Infrastructure: `MAC`, `UTL`, `GEN` — Legacy: `dbo`, `app`, `config`, `audit`, `reporting`
 2. **Create the migration** - In `Migrations/` with proper timestamp and description
 3. **Create the schema file** - In appropriate `ObjectType/schema/` directory
 4. **Follow templates** - Use the templates from README files or TEMPLATES.sql

@@ -80,4 +80,17 @@ AS
         [AFL].[AffiliateTypes]
     WHERE
         (IsDeleted = 0)
+
+    UNION ALL
+
+    SELECT
+        [DocumentTypeID] AS [Id],
+        [Prefix],
+        [DocumentTypeName] AS [Name],
+        [DocumentTypeDescription] AS [Description],
+        'DOC' AS [Schema],
+        'DocumentTypes' AS [TableName],
+        'Document' AS [TypeName]
+    FROM [DOC].[DocumentTypes]
+    WHERE [IsDeleted] = 0
 GO

@@ -74,6 +74,14 @@ BEGIN
     END
 
     -- Insert result row only if a prefix was resolved
+    ELSE IF (@TypeName = 'Document')
+    BEGIN
+        SELECT @Prefix = [Prefix]
+        FROM [DOC].[DocumentTypes] AS T
+        WHERE T.[DocumentTypeID] = @TypeId AND T.[IsActive] = 1 AND T.[IsDeleted] = 0;
+    END
+
+    -- Insert result row only if a prefix was resolved
     IF (@Prefix IS NOT NULL)
     BEGIN
         INSERT INTO @Parts

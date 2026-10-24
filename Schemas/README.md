@@ -8,7 +8,7 @@ Schemas are used to logically group database objects and manage permissions. Eac
 
 ## SOL_MAIN Database Schemas
 
-The following schemas are deployed in the SOL_MAIN database. All schemas are created by migration `20260313_0845_Baseline_Schemas`.
+The following schemas are defined for the SOL_MAIN database. Most schemas are created by migration `20260313_0845_Baseline_Schemas`; later additions have their own migrations. Actual deployment status is tracked in `[dbo].[SchemaVersion]`.
 
 | Schema | Full Name | Description | Key Tables |
 |---|---|---|---|
@@ -19,6 +19,7 @@ The following schemas are deployed in the SOL_MAIN database. All schemas are cre
 | `AUD` | Audit | Audit logging framework. Records field-level changes to audited tables via action type and column mappings. | `AuditActions`, `AuditActionTypes`, `AuditActionColumns` |
 | `CME` | Commission Management | Commission rates and types associated with monitoring accounts. | `MasAccountCommissions`, `MasAccountCommissionTypes` |
 | `CNS` | Consignment / Grouping Utilities | Utility schema for consignment and grouping operations. Primarily functions and procedures; no core tables. | — |
+| `DOC` | Document Management | Documents of all kinds, including signed contracts and engineering files such as DXF. Created by `20261024_1634_CreateDOCSchema`; metadata tables added by `20261024_1637_CreateDOCDocuments`. | `Documents`, `DocumentTypes` |
 | `FNE` | Financing / Funding | Funding sources and their types used in account financing. | `FundingSources`, `FundingSourceTypes` |
 | `GEN` | General / Shared Reference | Shared reference data and metadata used across schemas. | `StoredProcedureReturnTypes` |
 | `MAC` | Master Configuration | Master reference and configuration data: address types, account types, customer/quote/estimate records, purchase orders, geographic/political lookups. | `Accounts`, `Customers`, `Estimates`, `Quotes`, `PurchaseOrders`, `AddressTypes`, `PoliticalStates`, `PoliticalCountries` |
@@ -32,6 +33,7 @@ The following schemas are deployed in the SOL_MAIN database. All schemas are cre
 
 ```
 Schemas/
+├── DOC/              # Document management (signed contracts, DXF, other formats)
 ├── dbo/              # Default SQL Server schema
 ├── app/              # (reserved)
 ├── config/           # (reserved)
