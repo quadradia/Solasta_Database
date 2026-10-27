@@ -60,6 +60,7 @@ A Proxy-ID takes the form:
 | `MSTR` | 1 | Master Tenant | `ACC.DealerTenantTypes` | The master/root dealer tenant | 2026-03-13 |
 | `QUAD` | 2 | Quadradia Tenant | `ACC.DealerTenantTypes` | Quadradia dealer tenant | 2026-03-13 |
 | `SOLA` | 3 | Lighting Company Tenant | `ACC.DealerTenantTypes` | Lighting company with sales reps and technicians | 2026-05-09 |
+| `CIMT` | 4 | Manufacturing Company Tenant | `ACC.DealerTenantTypes` | Manufacturing company tenant | 2026-10-26 |
 
 ### AFL — Affiliate Marketing
 
