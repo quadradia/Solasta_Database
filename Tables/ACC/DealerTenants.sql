@@ -9,6 +9,7 @@
  * Modified: 2026-05-05 — Added DefaultTimeZoneId (FK to MAC.PoliticalTimeZones)
  * Modified: 2026-05-05 — Renamed to PoliticalTimeZoneId, NOT NULL, default 4
  * Modified: 2026-05-05 — Added DealerPrefix, SquareMedLogoPath, DealerRootSettingsJson (from ACC.Dealers)
+ * Modified: 2026-10-30 — Changed audit user IDs to UNIQUEIDENTIFIER
  ******************************************************************************/
 
 IF NOT EXISTS (SELECT *
@@ -30,9 +31,9 @@ BEGIN
 		[IsActive] [bit] NOT NULL,
 		[IsDeleted] [bit] NOT NULL,
 		[ModifiedDate] [datetimeoffset](7) NOT NULL,
-		[ModifiedById] [int] NOT NULL,
+		[ModifiedById] [uniqueidentifier] NOT NULL,
 		[CreatedDate] [datetimeoffset](7) NOT NULL,
-		[CreatedById] [int] NOT NULL,
+		[CreatedById] [uniqueidentifier] NOT NULL,
 		[DEX_ROW_TS] [datetimeoffset](7) NOT NULL,
 
 		CONSTRAINT [PK_Tenants] PRIMARY KEY CLUSTERED ([DealerTenantID] ASC)
@@ -75,7 +76,7 @@ GO
 IF NOT EXISTS (SELECT *
 FROM sys.objects
 WHERE name = 'DF_Tenants_ModifiedById' AND type = 'D')
-    ALTER TABLE [ACC].[DealerTenants] ADD CONSTRAINT [DF_Tenants_ModifiedById]  DEFAULT ((0)) FOR [ModifiedById];
+    ALTER TABLE [ACC].[DealerTenants] ADD CONSTRAINT [DF_Tenants_ModifiedById] DEFAULT ('E6872B58-52B2-415C-A32B-45805F95A70A') FOR [ModifiedById];
 GO
 
 IF NOT EXISTS (SELECT *
@@ -87,7 +88,7 @@ GO
 IF NOT EXISTS (SELECT *
 FROM sys.objects
 WHERE name = 'DF_Tenants_CreatedById' AND type = 'D')
-    ALTER TABLE [ACC].[DealerTenants] ADD CONSTRAINT [DF_Tenants_CreatedById]  DEFAULT ((0)) FOR [CreatedById];
+    ALTER TABLE [ACC].[DealerTenants] ADD CONSTRAINT [DF_Tenants_CreatedById] DEFAULT ('E6872B58-52B2-415C-A32B-45805F95A70A') FOR [CreatedById];
 GO
 
 IF NOT EXISTS (SELECT *
