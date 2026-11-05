@@ -30,6 +30,7 @@
 **	Date:		Author:				Description:
 **	-----------	---------------		-------------------------------------------
 **	2026-05-05	Andres E. Sosa		Created By
+**	2026-11-03	Andres E. Sosa		Added AffiliateApplication and BucksTransaction (AFL)
 **
 *******************************************************************************/
 
@@ -73,12 +74,34 @@ BEGIN
         WHERE (T.[AffiliateTypeID] = @TypeId);
     END
 
-    -- Insert result row only if a prefix was resolved
+    -- =========================================================================
+    -- Document — DOC.DocumentTypes
+    -- =========================================================================
     ELSE IF (@TypeName = 'Document')
     BEGIN
         SELECT @Prefix = [Prefix]
         FROM [DOC].[DocumentTypes] AS T
         WHERE T.[DocumentTypeID] = @TypeId AND T.[IsActive] = 1 AND T.[IsDeleted] = 0;
+    END
+
+    -- =========================================================================
+    -- AffiliateApplication — AFL.AffiliateApplicationTypes
+    -- =========================================================================
+    ELSE IF (@TypeName = 'AffiliateApplication')
+    BEGIN
+        SELECT @Prefix = [Prefix]
+        FROM [AFL].[AffiliateApplicationTypes] AS T
+        WHERE T.[AffiliateApplicationTypeID] = @TypeId AND T.[IsActive] = 1 AND T.[IsDeleted] = 0;
+    END
+
+    -- =========================================================================
+    -- BucksTransaction — AFL.BucksTransactionTypes
+    -- =========================================================================
+    ELSE IF (@TypeName = 'BucksTransaction')
+    BEGIN
+        SELECT @Prefix = [Prefix]
+        FROM [AFL].[BucksTransactionTypes] AS T
+        WHERE T.[BucksTransactionTypeID] = @TypeId AND T.[IsActive] = 1 AND T.[IsDeleted] = 0;
     END
 
     -- Insert result row only if a prefix was resolved

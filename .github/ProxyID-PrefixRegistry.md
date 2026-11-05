@@ -64,11 +64,21 @@ A Proxy-ID takes the form:
 
 ### AFL — Affiliate Marketing
 
+> **`AFL.AffiliateTypes` IDs are not fixed.** Migration `20260505_1200` seeded them with `MERGE`
+> without explicit IDs, so each environment numbered them in its own order (SOL_MAIN dev:
+> `AFIN`=1, `AFPR`=2, `AFST`=3). Look these types up by `Prefix`, never by ID. Newer AFL type
+> tables below are seeded with explicit IDs, which are stable.
+
 | Prefix | TypeId | TypeName | Type Table | Description | Registered |
 |--------|--------|----------|------------|-------------|------------|
-| `AFST` | 1 | Standard Affiliate | `AFL.AffiliateTypes` | General-purpose affiliate account | 2026-05-05 |
-| `AFIN` | 2 | Influencer Affiliate | `AFL.AffiliateTypes` | Social media influencer affiliate | 2026-05-05 |
-| `AFPR` | 3 | Partner Affiliate | `AFL.AffiliateTypes` | Business partner affiliate | 2026-05-05 |
+| `AFIN` | 1 (dev; varies) | Influencer Affiliate | `AFL.AffiliateTypes` | Social media influencer affiliate | 2026-05-05 |
+| `AFPR` | 2 (dev; varies) | Partner Affiliate | `AFL.AffiliateTypes` | Business partner affiliate | 2026-05-05 |
+| `AFST` | 3 (dev; varies) | Standard Affiliate | `AFL.AffiliateTypes` | General-purpose affiliate account | 2026-05-05 |
+| `AFAW` | 1 | Website Application | `AFL.AffiliateApplicationTypes` | Affiliate signup from the public website form | 2026-11-03 |
+| `AFBP` | 1 | Post Reward | `AFL.BucksTransactionTypes` | Bucks credit for an approved social media post | 2026-11-03 |
+| `AFBR` | 2 | Referral Reward | `AFL.BucksTransactionTypes` | Bucks credit for a qualifying referred purchase | 2026-11-03 |
+| `AFBD` | 3 | Redemption | `AFL.BucksTransactionTypes` | Bucks debit applied to an order | 2026-11-03 |
+| `AFBA` | 4 | Adjustment | `AFL.BucksTransactionTypes` | Manual staff Bucks correction (credit or debit) | 2026-11-03 |
 
 ### DOC — Document Management
 
