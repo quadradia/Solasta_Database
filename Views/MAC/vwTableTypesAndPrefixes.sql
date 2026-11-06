@@ -29,6 +29,7 @@
 **	Date:		Author:				Description:
 **	-----------	---------------		-------------------------------------------
 **	2026-05-05	Andres E. Sosa		Created By
+**	2026-11-03	Andres E. Sosa		Added AffiliateApplication and BucksTransaction (AFL)
 **
 *******************************************************************************/
 
@@ -93,4 +94,42 @@ AS
         'Document' AS [TypeName]
     FROM [DOC].[DocumentTypes]
     WHERE [IsDeleted] = 0
+
+    UNION ALL
+
+    -- =========================================================================
+    -- AFL.AffiliateApplicationTypes  (Prefix examples: AFAW)
+    -- Entity: AffiliateApplication
+    -- =========================================================================
+    SELECT
+        [AffiliateApplicationTypeID]          AS [Id]
+        , [Prefix]
+        , [AffiliateApplicationTypeName]      AS [Name]
+        , [AffiliateApplicationTypeDescription] AS [Description]
+        , 'AFL'                               AS [Schema]
+        , 'AffiliateApplicationTypes'         AS [TableName]
+        , 'AffiliateApplication'              AS [TypeName]
+    FROM
+        [AFL].[AffiliateApplicationTypes]
+    WHERE
+        (IsDeleted = 0)
+
+    UNION ALL
+
+    -- =========================================================================
+    -- AFL.BucksTransactionTypes  (Prefix examples: AFBP, AFBR, AFBD, AFBA)
+    -- Entity: BucksTransaction
+    -- =========================================================================
+    SELECT
+        [BucksTransactionTypeID]          AS [Id]
+        , [Prefix]
+        , [BucksTransactionTypeName]      AS [Name]
+        , [BucksTransactionTypeDescription] AS [Description]
+        , 'AFL'                           AS [Schema]
+        , 'BucksTransactionTypes'         AS [TableName]
+        , 'BucksTransaction'              AS [TypeName]
+    FROM
+        [AFL].[BucksTransactionTypes]
+    WHERE
+        (IsDeleted = 0)
 GO

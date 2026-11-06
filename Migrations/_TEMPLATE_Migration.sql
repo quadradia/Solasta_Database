@@ -15,6 +15,10 @@ Rollback: Instructions for rolling back this migration if needed
 -- SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
 GO
 
+-- Remove this guard in your copy. It stops the template itself from running (it did once,
+-- leaving dbo.YourTableName behind); it sits outside the TRY so nothing is logged to SchemaVersion.
+THROW 50001, 'This is the migration template. Copy it to a dated file, set @MigrationName, and remove this guard.', 1;
+
 BEGIN TRANSACTION;
 
 BEGIN TRY
