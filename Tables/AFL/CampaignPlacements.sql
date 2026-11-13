@@ -24,6 +24,8 @@ BEGIN
         [DealerTenantId] [int] NOT NULL,
         [AffiliateCampaignId] [int] NOT NULL,
         [MediaPlatformId] [int] NOT NULL,
+        -- Set when the placement is an affiliate's tracked link for one of Solasta's own posts.
+        [SocialPostId] [int] NULL,
         [TrackingToken] [varchar](50) NOT NULL,
         [PlacementUrl] [nvarchar](2000) NULL,
         [PostedDate] [datetimeoffset](7) NULL,
@@ -35,7 +37,6 @@ BEGIN
         [CreatedDate] [datetimeoffset](7) NOT NULL,
         [CreatedById] [uniqueidentifier] NOT NULL,
         [DEX_ROW_TS] [datetimeoffset](7) NOT NULL,
-        [SocialPostId] [int] NULL,
         CONSTRAINT [PK_CampaignPlacements] PRIMARY KEY CLUSTERED
 (
 	[CampaignPlacementID] ASC
@@ -123,12 +124,11 @@ GO
 ALTER TABLE [AFL].[CampaignPlacements] CHECK CONSTRAINT [FK_CampaignPlacements_DealerTenants]
 GO
 
--- Synced Solasta post associated with this affiliate tracking link.
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys
-               WHERE name = N'FK_AFL_CampaignPlacements_SocialPosts'
+               WHERE name = N'FK_CampaignPlacements_SocialPosts'
                  AND parent_object_id = OBJECT_ID(N'AFL.CampaignPlacements'))
 ALTER TABLE [AFL].[CampaignPlacements] WITH CHECK
-    ADD CONSTRAINT [FK_AFL_CampaignPlacements_SocialPosts] FOREIGN KEY ([SocialPostId])
+    ADD CONSTRAINT [FK_CampaignPlacements_SocialPosts] FOREIGN KEY ([SocialPostId])
     REFERENCES [AFL].[SocialPosts] ([SocialPostID]);
 GO
 
