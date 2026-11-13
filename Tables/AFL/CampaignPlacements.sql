@@ -11,7 +11,7 @@
  *              Example: Affiliate "JSMITH" posts on LinkedIn → token "AFL-LI-00042"
  * Author:
  * Created: 2026-05-04
- * Dependencies: AFL.AffiliateCampaigns, AFL.MediaPlatforms, ACC.DealerTenants
+ * Dependencies: AFL.AffiliateCampaigns, AFL.MediaPlatforms, AFL.SocialPosts, ACC.DealerTenants
  ******************************************************************************/
 
 IF NOT EXISTS (SELECT *
@@ -35,6 +35,7 @@ BEGIN
         [CreatedDate] [datetimeoffset](7) NOT NULL,
         [CreatedById] [uniqueidentifier] NOT NULL,
         [DEX_ROW_TS] [datetimeoffset](7) NOT NULL,
+        [SocialPostId] [int] NULL,
         CONSTRAINT [PK_CampaignPlacements] PRIMARY KEY CLUSTERED
 (
 	[CampaignPlacementID] ASC
@@ -120,4 +121,28 @@ REFERENCES [ACC].[DealerTenants] ([DealerTenantID])
 GO
 
 ALTER TABLE [AFL].[CampaignPlacements] CHECK CONSTRAINT [FK_CampaignPlacements_DealerTenants]
+GO
+
+-- Synced Solasta post associated with this affiliate tracking link.
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys
+               WHERE name = N'FK_AFL_CampaignPlacements_SocialPosts'
+                 AND parent_object_id = OBJECT_ID(N'AFL.CampaignPlacements'))
+ALTER TABLE [AFL].[CampaignPlacements] WITH CHECK
+    ADD CONSTRAINT [FK_AFL_CampaignPlacements_SocialPosts] FOREIGN KEY ([SocialPostId])
+    REFERENCES [AFL].[SocialPosts] ([SocialPostID]);
+GO
+
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_CampaignPlacements_SocialPostId'
+               AND object_id = OBJECT_ID(N'AFL.CampaignPlacements'))
+CREATE INDEX [IX_CampaignPlacements_SocialPostId]
+    ON [AFL].[CampaignPlacements] ([SocialPostId]) WHERE [SocialPostId] IS NOT NULL;
 GO
