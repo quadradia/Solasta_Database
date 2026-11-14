@@ -40,10 +40,11 @@ BEGIN
         -- private, unlisted or public, as sent to YouTube. Until Google's API audit passes,
         -- YouTube forces every API upload to private whatever is sent.
         [PrivacyStatus] [varchar](10) NOT NULL CONSTRAINT [DF_YouTubeVideos_PrivacyStatus] DEFAULT ('private'),
+        -- Receiving: the admin site is still sending the file in pieces.
         -- Queued: file staged, waiting for the upload job. Uploading: in progress.
         -- Uploaded: on YouTube. Failed: see UploadError; staff can retry.
         -- Imported: already on YouTube before the admin page existed.
-        [UploadStatus] [varchar](10) NOT NULL CONSTRAINT [DF_YouTubeVideos_UploadStatus] DEFAULT ('Queued'),
+        [UploadStatus] [varchar](10) NOT NULL CONSTRAINT [DF_YouTubeVideos_UploadStatus] DEFAULT ('Receiving'),
         [UploadError] [nvarchar](1000) NULL,
         [UploadAttempts] [int] NOT NULL CONSTRAINT [DF_YouTubeVideos_UploadAttempts] DEFAULT ((0)),
         -- Opaque key of the staged file in the API's document storage; cleared after upload.
@@ -71,7 +72,7 @@ BEGIN
         CONSTRAINT [FK_YouTubeVideos_SocialPosts_CaptionSource] FOREIGN KEY ([CaptionSourceSocialPostId])
             REFERENCES [AFL].[SocialPosts] ([SocialPostID]),
         CONSTRAINT [CK_YouTubeVideos_PrivacyStatus] CHECK ([PrivacyStatus] IN ('private', 'unlisted', 'public')),
-        CONSTRAINT [CK_YouTubeVideos_UploadStatus] CHECK ([UploadStatus] IN ('Queued', 'Uploading', 'Uploaded', 'Failed', 'Imported'))
+        CONSTRAINT [CK_YouTubeVideos_UploadStatus] CHECK ([UploadStatus] IN ('Receiving', 'Queued', 'Uploading', 'Uploaded', 'Failed', 'Imported'))
     );
 END;
 GO

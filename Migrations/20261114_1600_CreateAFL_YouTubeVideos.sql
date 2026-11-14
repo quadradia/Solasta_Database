@@ -55,7 +55,7 @@ BEGIN TRY
             [Description] [nvarchar](5000) NULL,
             [Tags] [nvarchar](500) NULL,
             [PrivacyStatus] [varchar](10) NOT NULL CONSTRAINT [DF_YouTubeVideos_PrivacyStatus] DEFAULT ('private'),
-            [UploadStatus] [varchar](10) NOT NULL CONSTRAINT [DF_YouTubeVideos_UploadStatus] DEFAULT ('Queued'),
+            [UploadStatus] [varchar](10) NOT NULL CONSTRAINT [DF_YouTubeVideos_UploadStatus] DEFAULT ('Receiving'),
             [UploadError] [nvarchar](1000) NULL,
             [UploadAttempts] [int] NOT NULL CONSTRAINT [DF_YouTubeVideos_UploadAttempts] DEFAULT ((0)),
             [StorageKey] [nvarchar](100) NULL,
@@ -80,7 +80,7 @@ BEGIN TRY
             CONSTRAINT [FK_YouTubeVideos_SocialPosts_CaptionSource] FOREIGN KEY ([CaptionSourceSocialPostId])
                 REFERENCES [AFL].[SocialPosts] ([SocialPostID]),
             CONSTRAINT [CK_YouTubeVideos_PrivacyStatus] CHECK ([PrivacyStatus] IN ('private', 'unlisted', 'public')),
-            CONSTRAINT [CK_YouTubeVideos_UploadStatus] CHECK ([UploadStatus] IN ('Queued', 'Uploading', 'Uploaded', 'Failed', 'Imported'))
+            CONSTRAINT [CK_YouTubeVideos_UploadStatus] CHECK ([UploadStatus] IN ('Receiving', 'Queued', 'Uploading', 'Uploaded', 'Failed', 'Imported'))
         );
     END;
 
