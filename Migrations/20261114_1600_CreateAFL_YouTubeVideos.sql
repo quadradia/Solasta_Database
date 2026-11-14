@@ -52,7 +52,7 @@ BEGIN TRY
             [CaptionSourceSocialPostId] [int] NULL,
             [ExternalVideoId] [varchar](20) NULL,
             [Title] [nvarchar](100) NOT NULL,
-            [Description] [nvarchar](5000) NULL,
+            [Description] [nvarchar](max) NULL,
             [Tags] [nvarchar](500) NULL,
             [PrivacyStatus] [varchar](10) NOT NULL CONSTRAINT [DF_YouTubeVideos_PrivacyStatus] DEFAULT ('private'),
             [UploadStatus] [varchar](10) NOT NULL CONSTRAINT [DF_YouTubeVideos_UploadStatus] DEFAULT ('Receiving'),

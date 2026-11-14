@@ -34,7 +34,7 @@ BEGIN
         [ExternalVideoId] [varchar](20) NULL,
         -- YouTube limits: title 100 characters, description 5000 bytes, tags 500 characters.
         [Title] [nvarchar](100) NOT NULL,
-        [Description] [nvarchar](5000) NULL,
+        [Description] [nvarchar](max) NULL,
         -- Comma-separated.
         [Tags] [nvarchar](500) NULL,
         -- private, unlisted or public, as sent to YouTube. Until Google's API audit passes,
