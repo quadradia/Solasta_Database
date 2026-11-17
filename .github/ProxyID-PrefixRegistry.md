@@ -98,6 +98,7 @@ A Proxy-ID takes the form:
 | Prefix | TypeId | TypeName | Type Table | Description | Registered |
 |--------|--------|----------|------------|-------------|------------|
 | `MAMS` | — | Roofline Measurement | *(none; `MAC.Measurements.Proxy`)* | A lead's roofline measurement from a KML file | 2026-11-17 |
+| `MAQT` | seeded | Lead quote | `MAC.QuoteTypes` | A quote for one product made for a lead (`MAC.Quotes.Proxy`) | 2026-11-17 |
 
 ### RSU — Resource & Users
 
