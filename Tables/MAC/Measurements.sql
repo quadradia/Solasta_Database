@@ -43,6 +43,8 @@ BEGIN
         -- Things the parser or run detection could not settle, one per line.
         [Warnings] [nvarchar](4000) NULL,
         [Notes] [nvarchar](2000) NULL,
+        -- Locations measured but not priced (the measuring tool's Include? = No), one per line; NULL = all priced.
+        [ExcludedLocations] [nvarchar](400) NULL,
         [IsActive] [bit] NOT NULL CONSTRAINT [DF_Measurements_IsActive] DEFAULT ((1)),
         [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_Measurements_IsDeleted] DEFAULT ((0)),
         [ModifiedDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_Measurements_ModifiedDate] DEFAULT (SYSDATETIMEOFFSET()),

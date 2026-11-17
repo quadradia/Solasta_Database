@@ -39,6 +39,8 @@ BEGIN
         [AltitudeMeters] [float] NOT NULL,
         -- Order in the KML file.
         [SortOrder] [int] NOT NULL,
+        -- Set when staff changed the pin's height (AltitudeMeters) by hand.
+        [IsEdited] [bit] NOT NULL CONSTRAINT [DF_MeasurementPoints_IsEdited] DEFAULT ((0)),
         [IsActive] [bit] NOT NULL CONSTRAINT [DF_MeasurementPoints_IsActive] DEFAULT ((1)),
         [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_MeasurementPoints_IsDeleted] DEFAULT ((0)),
         [ModifiedDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_MeasurementPoints_ModifiedDate] DEFAULT (SYSDATETIMEOFFSET()),
