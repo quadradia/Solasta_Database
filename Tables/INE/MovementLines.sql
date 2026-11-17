@@ -24,12 +24,12 @@ BEGIN
         [StockItemId] [int] NOT NULL,
         [LotId] [int] NULL,
         [SerialUnitId] [bigint] NULL,
-        [Quantity] [decimal](19, 4) NOT NULL,
-        [UnitCost] [decimal](19, 4) NULL,
         -- Receive: the PO line this fills.
         [PurchaseOrderLineId] [bigint] NULL,
         -- IssueToJob: the allocation this consumes.
         [AllocationId] [bigint] NULL,
+        [Quantity] [decimal](19, 4) NOT NULL,
+        [UnitCost] [decimal](19, 4) NULL,
         [CreatedDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_MovementLines_CreatedDate] DEFAULT (SYSDATETIMEOFFSET()),
         [CreatedById] [uniqueidentifier] NOT NULL CONSTRAINT [DF_MovementLines_CreatedById] DEFAULT ('E6872B58-52B2-415C-A32B-45805F95A70A'),
         [DEX_ROW_TS] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_MovementLines_DEX_ROW_TS] DEFAULT (SYSDATETIMEOFFSET()),

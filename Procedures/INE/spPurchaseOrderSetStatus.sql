@@ -93,6 +93,10 @@ BEGIN
     BEGIN CATCH
         IF XACT_STATE() <> 0
             ROLLBACK TRANSACTION;
+        -- A nested INE procedure already formatted this error; pass it on unchanged so the
+        -- API still sees ERROR_MESSAGE starting with the 041xx code.
+        IF ERROR_MESSAGE() LIKE N'{"ERROR_NUMBER":%'
+            THROW;
         EXEC [GEN].[spExceptionsThrown];
         RETURN -1;
     END CATCH;

@@ -20,8 +20,8 @@ BEGIN
     (
         [PurchaseOrderLineID] [bigint] IDENTITY(1,1) NOT NULL,
         [PurchaseOrderId] [bigint] NOT NULL,
-        [LineNumber] [int] NOT NULL,
         [StockItemId] [int] NOT NULL,
+        [LineNumber] [int] NOT NULL,
         [QuantityOrdered] [decimal](19, 4) NOT NULL,
         [QuantityReceived] [decimal](19, 4) NOT NULL CONSTRAINT [DF_PurchaseOrderLines_QuantityReceived] DEFAULT ((0)),
         [UnitCost] [decimal](19, 4) NOT NULL CONSTRAINT [DF_PurchaseOrderLines_UnitCost] DEFAULT ((0)),

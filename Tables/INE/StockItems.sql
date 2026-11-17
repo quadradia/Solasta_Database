@@ -24,14 +24,14 @@ BEGIN
     (
         [StockItemID] [int] IDENTITY(1,1) NOT NULL,
         [DealerTenantId] [int] NOT NULL,
+        [ProductId] [int] NULL,
+        [DefaultVendorId] [int] NULL,
         [Sku] [nvarchar](30) NOT NULL,
         [Name] [nvarchar](150) NOT NULL,
         [Description] [nvarchar](1000) NULL,
         [Category] [nvarchar](50) NULL,
         [TrackingMode] [varchar](10) NOT NULL CONSTRAINT [DF_StockItems_TrackingMode] DEFAULT ('Quantity'),
         [UnitOfMeasure] [varchar](4) NOT NULL CONSTRAINT [DF_StockItems_UnitOfMeasure] DEFAULT ('each'),
-        [ProductId] [int] NULL,
-        [DefaultVendorId] [int] NULL,
         [VendorSku] [nvarchar](50) NULL,
         -- Last known cost per unit of measure; receipts record the actual cost on each line.
         [StandardCost] [decimal](19, 4) NULL,

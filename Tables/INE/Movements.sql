@@ -25,7 +25,6 @@ BEGIN
         [MovementID] [bigint] IDENTITY(1,1) NOT NULL,
         [DealerTenantId] [int] NOT NULL,
         [MovementTypeId] [int] NOT NULL,
-        [MovementDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_Movements_MovementDate] DEFAULT (SYSDATETIMEOFFSET()),
         [FromLocationId] [int] NULL,
         [ToLocationId] [int] NULL,
         -- The job the stock went to or came back from.
@@ -33,6 +32,7 @@ BEGIN
         [ReceiptId] [bigint] NULL,
         [StockCountId] [bigint] NULL,
         [ReversesMovementId] [bigint] NULL,
+        [MovementDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_Movements_MovementDate] DEFAULT (SYSDATETIMEOFFSET()),
         -- RMA number, transfer slip, work order, ...
         [Reference] [nvarchar](50) NULL,
         [Notes] [nvarchar](2000) NULL,

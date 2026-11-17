@@ -25,19 +25,19 @@ BEGIN
         [LocationID] [int] IDENTITY(1,1) NOT NULL,
         [DealerTenantId] [int] NOT NULL,
         [LocationTypeId] [int] NOT NULL,
-        -- Short code, unique per tenant, e.g. MAIN, VAN-03, JOB-1042.
-        [Code] [nvarchar](30) NOT NULL,
-        [Name] [nvarchar](150) NOT NULL,
         -- Vehicle: the installer who holds the stock.
         [UserId] [uniqueidentifier] NULL,
         -- Job: the lead the stock was issued to.
         [LeadId] [bigint] NULL,
         -- Vendor: the supplier stock is returned to.
         [VendorId] [int] NULL,
+        [PoliticalStateId] [varchar](4) NULL,
+        -- Short code, unique per tenant, e.g. MAIN, VAN-03, JOB-1042.
+        [Code] [nvarchar](30) NOT NULL,
+        [Name] [nvarchar](150) NOT NULL,
         [StreetAddress] [nvarchar](100) NULL,
         [StreetAddress2] [nvarchar](100) NULL,
         [City] [nvarchar](100) NULL,
-        [PoliticalStateId] [varchar](4) NULL,
         [PostalCode] [nvarchar](15) NULL,
         [Notes] [nvarchar](2000) NULL,
         [IsActive] [bit] NOT NULL CONSTRAINT [DF_Locations_IsActive] DEFAULT ((1)),

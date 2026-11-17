@@ -138,6 +138,7 @@ BEGIN TRY
         (
             [VendorID] [int] IDENTITY(1,1) NOT NULL,
             [DealerTenantId] [int] NOT NULL,
+            [PoliticalStateId] [varchar](4) NULL,
             -- Short code shown on POs, unique per tenant.
             [Code] [nvarchar](20) NOT NULL,
             [Name] [nvarchar](150) NOT NULL,
@@ -148,7 +149,6 @@ BEGIN TRY
             [StreetAddress] [nvarchar](100) NULL,
             [StreetAddress2] [nvarchar](100) NULL,
             [City] [nvarchar](100) NULL,
-            [PoliticalStateId] [varchar](4) NULL,
             [PostalCode] [nvarchar](15) NULL,
             -- Typical days from order to delivery; feeds reorder suggestions.
             [LeadTimeDays] [int] NULL,
@@ -185,19 +185,19 @@ BEGIN TRY
             [LocationID] [int] IDENTITY(1,1) NOT NULL,
             [DealerTenantId] [int] NOT NULL,
             [LocationTypeId] [int] NOT NULL,
-            -- Short code, unique per tenant, e.g. MAIN, VAN-03, JOB-1042.
-            [Code] [nvarchar](30) NOT NULL,
-            [Name] [nvarchar](150) NOT NULL,
             -- Vehicle: the installer who holds the stock.
             [UserId] [uniqueidentifier] NULL,
             -- Job: the lead the stock was issued to.
             [LeadId] [bigint] NULL,
             -- Vendor: the supplier stock is returned to.
             [VendorId] [int] NULL,
+            [PoliticalStateId] [varchar](4) NULL,
+            -- Short code, unique per tenant, e.g. MAIN, VAN-03, JOB-1042.
+            [Code] [nvarchar](30) NOT NULL,
+            [Name] [nvarchar](150) NOT NULL,
             [StreetAddress] [nvarchar](100) NULL,
             [StreetAddress2] [nvarchar](100) NULL,
             [City] [nvarchar](100) NULL,
-            [PoliticalStateId] [varchar](4) NULL,
             [PostalCode] [nvarchar](15) NULL,
             [Notes] [nvarchar](2000) NULL,
             [IsActive] [bit] NOT NULL CONSTRAINT [DF_Locations_IsActive] DEFAULT ((1)),
@@ -244,14 +244,14 @@ BEGIN TRY
         (
             [StockItemID] [int] IDENTITY(1,1) NOT NULL,
             [DealerTenantId] [int] NOT NULL,
+            [ProductId] [int] NULL,
+            [DefaultVendorId] [int] NULL,
             [Sku] [nvarchar](30) NOT NULL,
             [Name] [nvarchar](150) NOT NULL,
             [Description] [nvarchar](1000) NULL,
             [Category] [nvarchar](50) NULL,
             [TrackingMode] [varchar](10) NOT NULL CONSTRAINT [DF_StockItems_TrackingMode] DEFAULT ('Quantity'),
             [UnitOfMeasure] [varchar](4) NOT NULL CONSTRAINT [DF_StockItems_UnitOfMeasure] DEFAULT ('each'),
-            [ProductId] [int] NULL,
-            [DefaultVendorId] [int] NULL,
             [VendorSku] [nvarchar](50) NULL,
             -- Last known cost per unit of measure; receipts record the actual cost on each line.
             [StandardCost] [decimal](19, 4) NULL,
@@ -414,8 +414,8 @@ BEGIN TRY
         (
             [PurchaseOrderLineID] [bigint] IDENTITY(1,1) NOT NULL,
             [PurchaseOrderId] [bigint] NOT NULL,
-            [LineNumber] [int] NOT NULL,
             [StockItemId] [int] NOT NULL,
+            [LineNumber] [int] NOT NULL,
             [QuantityOrdered] [decimal](19, 4) NOT NULL,
             [QuantityReceived] [decimal](19, 4) NOT NULL CONSTRAINT [DF_PurchaseOrderLines_QuantityReceived] DEFAULT ((0)),
             [UnitCost] [decimal](19, 4) NOT NULL CONSTRAINT [DF_PurchaseOrderLines_UnitCost] DEFAULT ((0)),
@@ -491,12 +491,12 @@ BEGIN TRY
             [SerialUnitID] [bigint] IDENTITY(1,1) NOT NULL,
             [DealerTenantId] [int] NOT NULL,
             [StockItemId] [int] NOT NULL,
-            [SerialNumber] [nvarchar](60) NOT NULL,
             [LotId] [int] NULL,
             [CurrentLocationId] [int] NULL,
-            [Status] [varchar](10) NOT NULL CONSTRAINT [DF_SerialUnits_Status] DEFAULT ('InStock'),
             -- The PO line it was bought on, when there was one.
             [PurchaseOrderLineId] [bigint] NULL,
+            [SerialNumber] [nvarchar](60) NOT NULL,
+            [Status] [varchar](10) NOT NULL CONSTRAINT [DF_SerialUnits_Status] DEFAULT ('InStock'),
             [UnitCost] [decimal](19, 4) NULL,
             [ReceivedDate] [datetimeoffset](7) NULL,
             [IsActive] [bit] NOT NULL CONSTRAINT [DF_SerialUnits_IsActive] DEFAULT ((1)),
@@ -677,7 +677,6 @@ BEGIN TRY
             [MovementID] [bigint] IDENTITY(1,1) NOT NULL,
             [DealerTenantId] [int] NOT NULL,
             [MovementTypeId] [int] NOT NULL,
-            [MovementDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_Movements_MovementDate] DEFAULT (SYSDATETIMEOFFSET()),
             [FromLocationId] [int] NULL,
             [ToLocationId] [int] NULL,
             -- The job the stock went to or came back from.
@@ -685,6 +684,7 @@ BEGIN TRY
             [ReceiptId] [bigint] NULL,
             [StockCountId] [bigint] NULL,
             [ReversesMovementId] [bigint] NULL,
+            [MovementDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_Movements_MovementDate] DEFAULT (SYSDATETIMEOFFSET()),
             -- RMA number, transfer slip, work order, ...
             [Reference] [nvarchar](50) NULL,
             [Notes] [nvarchar](2000) NULL,
@@ -745,12 +745,12 @@ BEGIN TRY
             [StockItemId] [int] NOT NULL,
             [LotId] [int] NULL,
             [SerialUnitId] [bigint] NULL,
-            [Quantity] [decimal](19, 4) NOT NULL,
-            [UnitCost] [decimal](19, 4) NULL,
             -- Receive: the PO line this fills.
             [PurchaseOrderLineId] [bigint] NULL,
             -- IssueToJob: the allocation this consumes.
             [AllocationId] [bigint] NULL,
+            [Quantity] [decimal](19, 4) NOT NULL,
+            [UnitCost] [decimal](19, 4) NULL,
             [CreatedDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_MovementLines_CreatedDate] DEFAULT (SYSDATETIMEOFFSET()),
             [CreatedById] [uniqueidentifier] NOT NULL CONSTRAINT [DF_MovementLines_CreatedById] DEFAULT ('E6872B58-52B2-415C-A32B-45805F95A70A'),
             [DEX_ROW_TS] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_MovementLines_DEX_ROW_TS] DEFAULT (SYSDATETIMEOFFSET()),
@@ -802,9 +802,9 @@ BEGIN TRY
             [LocationId] [int] NOT NULL,
             [StockItemId] [int] NOT NULL,
             [LotId] [int] NULL,
+            [LastMovementId] [bigint] NULL,
             [QuantityOnHand] [decimal](19, 4) NOT NULL CONSTRAINT [DF_StockBalances_QuantityOnHand] DEFAULT ((0)),
             [QuantityAllocated] [decimal](19, 4) NOT NULL CONSTRAINT [DF_StockBalances_QuantityAllocated] DEFAULT ((0)),
-            [LastMovementId] [bigint] NULL,
             [ModifiedDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_StockBalances_ModifiedDate] DEFAULT (SYSDATETIMEOFFSET()),
             [CreatedDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_StockBalances_CreatedDate] DEFAULT (SYSDATETIMEOFFSET()),
             [DEX_ROW_TS] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_StockBalances_DEX_ROW_TS] DEFAULT (SYSDATETIMEOFFSET()),

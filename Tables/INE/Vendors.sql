@@ -18,6 +18,7 @@ BEGIN
     (
         [VendorID] [int] IDENTITY(1,1) NOT NULL,
         [DealerTenantId] [int] NOT NULL,
+        [PoliticalStateId] [varchar](4) NULL,
         -- Short code shown on POs, unique per tenant.
         [Code] [nvarchar](20) NOT NULL,
         [Name] [nvarchar](150) NOT NULL,
@@ -28,7 +29,6 @@ BEGIN
         [StreetAddress] [nvarchar](100) NULL,
         [StreetAddress2] [nvarchar](100) NULL,
         [City] [nvarchar](100) NULL,
-        [PoliticalStateId] [varchar](4) NULL,
         [PostalCode] [nvarchar](15) NULL,
         -- Typical days from order to delivery; feeds reorder suggestions.
         [LeadTimeDays] [int] NULL,

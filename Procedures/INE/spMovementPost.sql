@@ -263,6 +263,15 @@ BEGIN
                                                      WHERE SC.[StockCountID] = @StockCountId AND SC.[DealerTenantId] = @TenantId)
             THROW 50000, N'04110|:|The stock count was not found.', 1;
 
+        -- The transaction opens here, before the line checks, so the UPDLOCKs taken on
+        -- serial units, PO lines and allocations hold until the movement is written.
+        -- (Opened after them, two posts could both see a serial at the from location.)
+        IF @@TRANCOUNT = 0
+        BEGIN
+            BEGIN TRANSACTION;
+            SET @OwnsTransaction = 1;
+        END;
+
         /** LINES */
         DECLARE @Lines TABLE
         (
@@ -398,6 +407,14 @@ BEGIN
                 FROM @Lines WHERE [TrackingMode] = 'Serial' AND [SerialUnitId] IS NULL;
                 THROW 50000, @Msg, 1;
             END;
+            -- Lock every serial unit on the movement until it commits, so a concurrent post
+            -- cannot move the same unit between this check and the update below.
+            DECLARE @LockedSerialUnits INT =
+            (
+                SELECT COUNT(*)
+                FROM [INE].[SerialUnits] AS SU WITH (UPDLOCK, HOLDLOCK)
+                INNER JOIN @Lines AS LN ON LN.[SerialUnitId] = SU.[SerialUnitID]
+            );
             IF EXISTS (SELECT 1 FROM @Lines AS LN
                        INNER JOIN [INE].[SerialUnits] AS SU WITH (UPDLOCK) ON SU.[SerialUnitID] = LN.[SerialUnitId]
                        WHERE ISNULL(SU.[CurrentLocationId], -1) <> @FromLocationId)
@@ -491,11 +508,6 @@ BEGIN
         WHERE LN.[LotId] IS NULL AND LN.[LotNumber] IS NULL AND A.[LotId] IS NOT NULL;
 
         /** WRITE */
-        IF @@TRANCOUNT = 0
-        BEGIN
-            BEGIN TRANSACTION;
-            SET @OwnsTransaction = 1;
-        END;
 
         INSERT INTO [INE].[Movements]
             ([DealerTenantId], [MovementTypeId], [MovementDate], [FromLocationId], [ToLocationId], [LeadId],
@@ -688,6 +700,10 @@ BEGIN
     BEGIN CATCH
         IF @OwnsTransaction = 1 AND XACT_STATE() <> 0
             ROLLBACK TRANSACTION;
+        -- A nested INE procedure already formatted this error; pass it on unchanged so the
+        -- API still sees ERROR_MESSAGE starting with the 041xx code.
+        IF ERROR_MESSAGE() LIKE N'{"ERROR_NUMBER":%'
+            THROW;
         EXEC [GEN].[spExceptionsThrown];
         RETURN -1;
     END CATCH;
