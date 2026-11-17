@@ -7,7 +7,7 @@
  * Author: Andres Sosa
  * Created: 2026-11-17
  * Dependencies: ACC.DealerTenants
- * Migrations: 20261117_0330_CreateMAC_PricingCatalog
+ * Migrations: 20261117_0330_CreateMAC_PricingCatalog, 20261117_2230_AddMAC_QuoteBuilder
  * API mappings: Models/MAC/PricingCatalog.cs is written by hand; remove it when the
  *               AutoGenerator produces an equivalent.
  ******************************************************************************/
