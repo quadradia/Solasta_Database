@@ -2,13 +2,14 @@
  * Object Type: Table
  * Schema: MAC
  * Name: Products
- * Description: Products a tenant sells: rails priced per foot (P001, D001, D002) and add-ons
+ * Description: Products a tenant sells: rails priced per foot (P001, D001, D002), fixed costs
+ *              (dormers, gables, height cost) and add-ons
  *              such as cameras and DVRs. InstallCostPerUnit and ProductCostPerUnit are
  *              internal and never printed on the customer estimate.
  * Author: Andres Sosa
  * Created: 2026-11-17
  * Dependencies: ACC.DealerTenants
- * Migrations: 20261117_0330_CreateMAC_PricingCatalog
+ * Migrations: 20261117_0330_CreateMAC_PricingCatalog, 20261117_2230_AddMAC_QuoteBuilder
  * API mappings: Models/MAC/PricingCatalog.cs is written by hand; remove it when the
  *               AutoGenerator produces an equivalent.
  ******************************************************************************/
@@ -41,7 +42,7 @@ BEGIN
         CONSTRAINT [PK_Products] PRIMARY KEY CLUSTERED ([ProductID] ASC),
         CONSTRAINT [FK_Products_DealerTenants] FOREIGN KEY ([DealerTenantId])
             REFERENCES [ACC].[DealerTenants] ([DealerTenantID]),
-        CONSTRAINT [CK_Products_Category] CHECK ([Category] IN ('Rail', 'AddOn')),
+        CONSTRAINT [CK_Products_Category] CHECK ([Category] IN ('Rail', 'Fixed', 'AddOn')),
         CONSTRAINT [CK_Products_Unit] CHECK ([Unit] IN ('ft', 'each')),
         CONSTRAINT [CK_Products_PricePerUnit] CHECK ([PricePerUnit] >= 0),
         CONSTRAINT [CK_Products_InstallCostPerUnit] CHECK ([InstallCostPerUnit] IS NULL OR [InstallCostPerUnit] >= 0),
