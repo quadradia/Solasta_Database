@@ -8,6 +8,8 @@
  * Dependencies: ACC.fxGetContextUserTable, AUD.AuditActions, AUD.AuditActionColumns
  * Author: Andres E. Sosa
  * Created: 2017-09-27
+ * Changed: 20261117_2330_AddMAC_QuoteSigning reads DealerTenantId (the column was renamed from DealerId,
+ *          so the old trigger failed every insert or update).
  ******************************************************************************/
 
 IF OBJECT_ID('[ACE].[trgAutoGen_Customers_CUD]', 'TR') IS NOT NULL
@@ -21,8 +23,8 @@ BEGIN
     /**************
 	 * INITIALIZE
 	 **************/
-    DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerId INT;
-    SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerId
+    DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerTenantId INT;
+    SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerTenantId = DealerTenantId
     FROM [ACC].[fxGetContextUserTable]();
     DECLARE @DeletedTable TABLE (PKID BIGINT NOT NULL);
     INSERT INTO @DeletedTable
@@ -49,7 +51,7 @@ BEGIN
 			, CAST(CustomerID AS NVARCHAR(500)) AS CustomerID
 			, CAST(CustomerTypeId AS NVARCHAR(500)) AS CustomerTypeId
 			, CAST(MasterFileId AS NVARCHAR(500)) AS MasterFileId
-			, CAST(DealerId AS NVARCHAR(500)) AS DealerId
+			, CAST(DealerTenantId AS NVARCHAR(500)) AS DealerTenantId
 			, CAST(CustomerAddressId AS NVARCHAR(500)) AS CustomerAddressId
 			, CAST(LeadId AS NVARCHAR(500)) AS LeadId
 			, CAST(LanguageId AS NVARCHAR(500)) AS LanguageId
@@ -77,7 +79,7 @@ BEGIN
 			CustomerID
 			, CustomerTypeId
 			, MasterFileId
-			, DealerId
+			, DealerTenantId
 			, CustomerAddressId
 			, LeadId
 			, LanguageId
@@ -115,7 +117,7 @@ BEGIN
 			, CAST(CustomerID AS NVARCHAR(500)) AS CustomerID
 			, CAST(CustomerTypeId AS NVARCHAR(500)) AS CustomerTypeId
 			, CAST(MasterFileId AS NVARCHAR(500)) AS MasterFileId
-			, CAST(DealerId AS NVARCHAR(500)) AS DealerId
+			, CAST(DealerTenantId AS NVARCHAR(500)) AS DealerTenantId
 			, CAST(CustomerAddressId AS NVARCHAR(500)) AS CustomerAddressId
 			, CAST(LeadId AS NVARCHAR(500)) AS LeadId
 			, CAST(LanguageId AS NVARCHAR(500)) AS LanguageId
@@ -143,7 +145,7 @@ BEGIN
 			CustomerID
 			, CustomerTypeId
 			, MasterFileId
-			, DealerId
+			, DealerTenantId
 			, CustomerAddressId
 			, LeadId
 			, LanguageId

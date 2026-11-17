@@ -86,8 +86,10 @@ GO
 IF NOT EXISTS (SELECT *
 FROM sys.foreign_keys
 WHERE name = 'FK_Estimates_Customers')
+-- References ACE.Customers (the customers the API maps) since 20261117_2330_AddMAC_QuoteSigning, which moves
+-- it from the legacy MAC.Customers when every estimate's CustomerId exists in ACE.Customers.
 ALTER TABLE [MAC].[Estimates]  WITH CHECK ADD  CONSTRAINT [FK_Estimates_Customers] FOREIGN KEY([CustomerId])
-REFERENCES [MAC].[Customers] ([CustomerID])
+REFERENCES [ACE].[Customers] ([CustomerID])
 GO
 
 ALTER TABLE [MAC].[Estimates] CHECK CONSTRAINT [FK_Estimates_Customers]
