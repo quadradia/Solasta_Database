@@ -53,6 +53,7 @@
  * Returns: 0 on success (and a one-row result set with MovementID); -1 on error
  * Author: Andres Sosa
  * Created: 2026-11-17
+ * Modified: 2026-11-17 - reversing an issue no longer reopens a Cancelled allocation
  * Example:
  *   DECLARE @Id BIGINT;
  *   EXEC [INE].[spMovementPost] @MovementJson = N'{"movementType":"Transfer","fromLocationId":1,
@@ -557,11 +558,14 @@ BEGIN
             , [Quantity] DECIMAL(19, 4) NOT NULL
             , [AllocatedQuantity] DECIMAL(19, 4) NOT NULL
         );
+        -- A reversed issue gives stock back to its allocation only while the allocation is
+        -- still live; stock from a Cancelled allocation comes back unreserved.
         INSERT INTO @Totals ([StockItemId], [LotId], [Quantity], [AllocatedQuantity])
-        SELECT [StockItemId], [LotId], SUM([Quantity]),
-               SUM(CASE WHEN [AllocationId] IS NOT NULL THEN [Quantity] ELSE 0 END)
-        FROM @Lines
-        GROUP BY [StockItemId], [LotId];
+        SELECT LN.[StockItemId], LN.[LotId], SUM(LN.[Quantity]),
+               SUM(CASE WHEN LN.[AllocationId] IS NOT NULL AND ISNULL(A.[Status], '') <> 'Cancelled' THEN LN.[Quantity] ELSE 0 END)
+        FROM @Lines AS LN
+        LEFT JOIN [INE].[Allocations] AS A ON A.[AllocationID] = LN.[AllocationId]
+        GROUP BY LN.[StockItemId], LN.[LotId];
 
         /** FROM: take stock out */
         IF @FromLocationId IS NOT NULL
@@ -680,7 +684,9 @@ BEGIN
         BEGIN
             UPDATE A SET
                 A.[QuantityIssued] = A.[QuantityIssued] + CASE WHEN @IsReversal = 1 THEN -Q.[Qty] ELSE Q.[Qty] END
-                , A.[Status] = CASE WHEN A.[QuantityIssued] + CASE WHEN @IsReversal = 1 THEN -Q.[Qty] ELSE Q.[Qty] END
+                -- A Cancelled allocation stays Cancelled when an issue against it is reversed.
+                , A.[Status] = CASE WHEN A.[Status] = 'Cancelled' THEN 'Cancelled'
+                                    WHEN A.[QuantityIssued] + CASE WHEN @IsReversal = 1 THEN -Q.[Qty] ELSE Q.[Qty] END
                                          >= A.[QuantityAllocated] THEN 'Fulfilled' ELSE 'Open' END
                 , A.[ModifiedDate] = SYSDATETIMEOFFSET()
                 , A.[ModifiedById] = @UserId

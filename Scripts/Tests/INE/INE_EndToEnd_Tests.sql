@@ -14,7 +14,8 @@
  *              then apply the INE migrations and run:
  *                sqlcmd -E -S . -d SOL_INE_TEST -i Scripts\Tests\INE\INE_EndToEnd_Tests.sql
  *              Uses the dev Solasta Lighting tenant and its first user.
- * Dependencies: INE migrations 20261117_1800 and 20261117_1810, ACC.spSessionContextCreate
+ * Dependencies: INE migrations 20261117_1800, 20261117_1810 and 20261117_1900,
+ *               ACC.spSessionContextCreate
  * Author: Andres Sosa
  * Created: 2026-11-17
  ******************************************************************************/
@@ -299,6 +300,39 @@ SET @OkX = CASE WHEN (SELECT Status FROM INE.Allocations WHERE AllocationID = @A
                  AND (SELECT QuantityAllocated FROM INE.StockBalances WHERE LocationId = @MAIN AND StockItemId = @RAIL) = 25 THEN 1 ELSE 0 END;
 EXEC #Check @Ok = @OkX, @Label = N'reversed issue: allocation re-opened and stock reserved again';
 EXEC INE.spAllocationCancel @AllocationId = @A;
+GO
+-- a reversed issue does not bring back an allocation that was cancelled in between
+EXEC INE.spAllocationCreate @LeadId = 900001, @LocationId = @MAIN, @StockItemId = @RAIL, @Quantity = 25, @AllocationId = @A OUTPUT;
+SET @J = CONCAT(N'{"movementType":"IssueToJob","fromLocationId":', @MAIN, N',"toLocationId":', @JOB, N',"lines":[{"stockItemId":', @RAIL, N',"quantity":10,"allocationId":', @A, N'}]}');
+EXEC INE.spMovementPost @MovementJson = @J, @MovementId = @M OUTPUT, @ReturnResult = 0;
+EXEC INE.spAllocationCancel @AllocationId = @A;
+EXEC INE.spMovementReverse @MovementId = @M, @ReversalMovementId = @Rev OUTPUT;
+SET @OkX = CASE WHEN (SELECT Status FROM INE.Allocations WHERE AllocationID = @A) = 'Cancelled'
+                 AND (SELECT QuantityAllocated FROM INE.StockBalances WHERE LocationId = @MAIN AND StockItemId = @RAIL) = 0
+                 AND NOT EXISTS (SELECT 1 FROM INE.vwStockBalanceDrift) THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'reversed issue on a cancelled allocation: stays Cancelled, stock comes back unreserved';
+GO
+
+-- tenant guards and audit triggers (20261117_1900)
+DECLARE @OkX BIT;
+EXEC #Expect N'INSERT INTO INE.Vendors (DealerTenantId, Code, Name) SELECT MIN(DealerTenantID), N''OTHER'', N''Other tenant vendor'' FROM ACC.DealerTenants WHERE DealerTenantID <> 3', N'04180', N'row for another tenant than the session is rejected';
+EXEC #Expect N'UPDATE INE.Vendors SET DealerTenantId = (SELECT MIN(DealerTenantID) FROM ACC.DealerTenants WHERE DealerTenantID <> 3) WHERE Code = N''GVL''', N'04182', N'a row cannot change tenant';
+SET IDENTITY_INSERT [QAL].[Leads] ON;
+IF NOT EXISTS (SELECT 1 FROM QAL.Leads WHERE LeadID = 900002)
+    INSERT INTO [QAL].[Leads] ([LeadID], [CustomerTypeId], [MasterFileId], [DealerTenantId], [LanguageId], [LeadSourceId], [LeadDispositionId], [FirstName], [LastName])
+    VALUES (900002, 'X', 0, (SELECT MIN(DealerTenantID) FROM ACC.DealerTenants WHERE DealerTenantID <> 3), N'en', 0, 0, N'Other', N'Tenant');
+SET IDENTITY_INSERT [QAL].[Leads] OFF;
+EXEC #Expect N'INSERT INTO INE.Locations (DealerTenantId, LocationTypeId, Code, Name, LeadId) VALUES (3, 4, N''JOB-900002'', N''Other tenant job'', 900002)', N'04181', N'location cannot point at another tenant''s lead';
+EXEC #Expect N'INSERT INTO INE.PurchaseOrders (DealerTenantId, VendorId, ShipToLocationId, PONumber) SELECT 3, (SELECT VendorID FROM INE.Vendors WHERE Code = N''GVL''), LocationID, N''PO-BAD'' FROM INE.Locations WHERE Code = N''JOB-900001''', N'04181', N'PO cannot ship to a job location';
+DECLARE @User UNIQUEIDENTIFIER = (SELECT UserId FROM INE.fxGetSessionContext());
+UPDATE INE.Vendors SET PaymentTerms = N'Net 30' WHERE Code = N'GVL';
+SET @OkX = CASE WHEN EXISTS (SELECT 1 FROM AUD.AuditActions AS A
+                             INNER JOIN AUD.AuditActionColumns AS C ON C.AuditActionId = A.AuditActionID
+                             WHERE A.SchemaName = 'INE' AND A.TableName = 'Vendors' AND A.AuditActionTypeId = 'UPDATE'
+                               AND A.CreatedById = @User AND C.ColumnName = N'PaymentTerms' AND C.OldValue IS NULL AND C.NewValue = N'Net 30')
+                 AND EXISTS (SELECT 1 FROM AUD.AuditActions WHERE SchemaName = 'INE' AND TableName = 'PurchaseOrders' AND AuditActionTypeId = 'INSERT')
+            THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'audit triggers record inserts and updates (NULL -> value) with the session user';
 GO
 
 -- 14. PO close / reopen; 15. drift and on-hand

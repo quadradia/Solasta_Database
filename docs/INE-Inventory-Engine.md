@@ -4,9 +4,9 @@ The `INE` schema is Solasta's inventory system. It's adapted from the legacy NVL
 
 | | |
 |---|---|
-| Migrations | [20261117_1800_CreateINE_InventoryEngineTables](../Migrations/20261117_1800_CreateINE_InventoryEngineTables.sql), [20261117_1810_CreateINE_InventoryEngineProcedures](../Migrations/20261117_1810_CreateINE_InventoryEngineProcedures.sql) |
+| Migrations | [20261117_1800_CreateINE_InventoryEngineTables](../Migrations/20261117_1800_CreateINE_InventoryEngineTables.sql), [20261117_1810_CreateINE_InventoryEngineProcedures](../Migrations/20261117_1810_CreateINE_InventoryEngineProcedures.sql), [20261117_1900_AddINE_AuditAndTenantGuards](../Migrations/20261117_1900_AddINE_AuditAndTenantGuards.sql) |
 | Objects | `Tables/INE`, `Procedures/INE`, `Functions/INE`, `Views/INE`, `Triggers/INE`, `Data/INE`, `Schemas/INE` |
-| Tests | [Scripts/Tests/INE/INE_EndToEnd_Tests.sql](../Scripts/Tests/INE/INE_EndToEnd_Tests.sql) (41 checks; run in a throwaway copy) |
+| Tests | [Scripts/Tests/INE/INE_EndToEnd_Tests.sql](../Scripts/Tests/INE/INE_EndToEnd_Tests.sql) (47 checks; run in a throwaway copy) |
 
 ## 1. The model in one paragraph
 
@@ -82,6 +82,8 @@ erDiagram
 
 **Rule for the API:** read anything, and do plain CRUD on master data, draft POs and open counts. Never write `Movements`, `MovementLines`, `StockBalances`, `SerialUnits` or `Allocations` directly; call the procedures.
 
+**Audit and tenant triggers.** `Vendors`, `Locations`, `StockItems`, `StockLevels`, `PurchaseOrders` and `PurchaseOrderLines` have `trgAutoGen_*_CUD` audit triggers that write `AUD.AuditActions` / `AUD.AuditActionColumns`, with the user from the session context. Every table the API writes with plain CRUD (those six plus `Lots`, `StockCounts`, `StockCountLines`) has a `tr_*_TenantGuard` trigger: the row must belong to the session's tenant (04180), can only reference rows of its own tenant (04181; a PO also needs a stock-holding ship-to), and cannot change tenant (04182). Because these tables have triggers, the API must list them in `SolastaDbContext.TableTriggers`, or EF's inserts fail with SQL error 334.
+
 ## 4. Locations and movement types
 
 Location types: `Warehouse`, `Vehicle` (an installer's van; `UserId`), `Staging` (kitting area) are **stock-holding**. `Job` (one per lead; `LeadId`) and `Vendor` (`VendorId`) are not. They still get balances, so "what's installed at this job" and "what's out on RMA" are the same query, but they're excluded from available stock.
@@ -96,7 +98,7 @@ Location types: `Warehouse`, `Vehicle` (an installer's van; `UserId`), `Staging`
 | `AdjustIn` | none | stock-holding | Opening balance, found stock, count overage |
 | `AdjustOut` | stock-holding | none | Count shortage; serials become `Missing` |
 | `Scrap` | stock-holding | none | Damaged; serials become `Scrapped` |
-| `Reversal` | mirror of original | mirror of original | Only via `spMovementReverse` / `reversesMovementId`; lines come from the original |
+| `Reversal` | mirror of original | mirror of original | Only via `spMovementReverse` / `reversesMovementId`; lines come from the original. Reversing an issue re-reserves stock for its allocation unless the allocation was cancelled since |
 
 ## 5. Procedures
 
@@ -168,6 +170,9 @@ Views aren't tenant-filtered (same as the other Solasta tables); filter on `Deal
 | 04160-04163 | Stock counts |
 | 04170 | Ledger is append-only |
 | 04171 | PO lines locked after Draft |
+| 04180 | Row belongs to a different tenant than the session |
+| 04181 | Row references another tenant's vendor, lead, user, product, item, location, lot or serial |
+| 04182 | A row cannot change tenant |
 
 ## 8. Not done yet
 
