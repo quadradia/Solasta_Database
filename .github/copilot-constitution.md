@@ -203,6 +203,7 @@ These data type rules are law. Do not deviate.
 | `ACE` | Domain | Customer entities (CRM) |
 | `DOC` | Domain | Document management: signed contracts, engineering/DXF files, and other document formats |
 | `MAS` | Domain | Monitoring & alarm systems |
+| `INE` | Domain | Inventory engine (stock, purchasing, movement ledger) |
 | `QAL` | Domain | Qualified leads |
 | `RSU` | Domain | Resources & users |
 | `SEC` | Domain | Security & access control |
