@@ -96,7 +96,7 @@ A Proxy-ID takes the form:
 
 | Prefix | TypeId | TypeName | Type Table | Description | Registered |
 |--------|--------|----------|------------|-------------|------------|
-| *(none yet — reserved namespace `MA**`)* | | | | | |
+| `MAMS` | — | Roofline Measurement | *(none; `MAC.Measurements.Proxy`)* | A lead's roofline measurement from a KML file | 2026-11-17 |
 
 ### RSU — Resource & Users
 
