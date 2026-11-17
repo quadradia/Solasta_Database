@@ -43,6 +43,7 @@ A Proxy-ID takes the form:
 | `FNE` | `FN**` | Financing & funding |
 | `MAC` | `MA**` | Master catalog (Estimates, Quotes, POs) |
 | `MAS` | `MS**` | Monitoring & alarm systems |
+| `INE` | `IN**` | Inventory engine |
 | `QAL` | `QL**` | Qualified leads |
 | `RSU` | `RS**` | Resource & user management |
 | `SEC` | `SC**` | Security & access control |
