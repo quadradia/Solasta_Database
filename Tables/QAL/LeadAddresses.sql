@@ -16,17 +16,17 @@ BEGIN
 		[LeadAddressID] [bigint] IDENTITY(1,1) NOT NULL,
 		[DealerTenantId] [int] NOT NULL,
 		[LanguageId] [nvarchar](50) NOT NULL,
-		[AddressValidationVendorId] [varchar](20) NOT NULL,
-		[AddressValidationStateId] [varchar](5) NOT NULL,
+		[AddressValidationVendorId] [varchar](20) NULL,
+		[AddressValidationStateId] [varchar](5) NULL,
 		[PoliticalStateId] [varchar](4) NOT NULL,
 		[PoliticalCountryId] [nvarchar](10) NOT NULL,
-		[PoliticalTimeZoneId] [int] NOT NULL,
+		[PoliticalTimeZoneId] [int] NULL,
 		[AddressTypeId] [varchar](10) NOT NULL,
 		[AddressStreetTypeId] [int] NULL,
-		[SeasonId] [int] NOT NULL,
-		[TeamLocationId] [int] NOT NULL,
-		[SalesRepId] [nvarchar](25) NOT NULL,
-		[StreetAddress] [nvarchar](50) NOT NULL,
+		[SeasonId] [int] NULL,
+		[TeamLocationId] [int] NULL,
+		[SalesRepId] [nvarchar](25) NULL,
+		[StreetAddress] [nvarchar](200) NOT NULL,
 		[StreetAddress2] [nvarchar](50) NULL,
 		[StreetNumber] [nvarchar](40) NULL,
 		[StreetName] [nvarchar](50) NULL,
@@ -39,15 +39,15 @@ BEGIN
 		[CountyCode] [nvarchar](6) NULL,
 		[Urbanization] [nvarchar](50) NULL,
 		[UrbanizationCode] [nvarchar](3) NULL,
-		[City] [nvarchar](50) NOT NULL,
+		[City] [nvarchar](100) NOT NULL,
 		[PostalCode] [nvarchar](5) NOT NULL,
 		[PlusFour] [nvarchar](4) NULL,
 		[PostalCodeFull] [varchar](15) NULL,
 		[Phone] [varchar](20) NULL,
 		[DeliveryPoint] [nvarchar](2) NULL,
 		[CrossStreet] [varchar](50) NULL,
-		[Latitude] [float] NOT NULL,
-		[Longitude] [float] NOT NULL,
+		[Latitude] [float] NULL,
+		[Longitude] [float] NULL,
 		[CongressionalDistric] [int] NULL,
 		[DPV] [bit] NOT NULL,
 		[DPVResponse] [char](10) NULL,
@@ -73,6 +73,12 @@ IF NOT EXISTS (SELECT *
 FROM sys.objects
 WHERE name = 'DF_Address_LanguageId' AND type = 'D')
 ALTER TABLE [QAL].[LeadAddresses] ADD  CONSTRAINT [DF_Address_LanguageId]  DEFAULT (N'en') FOR [LanguageId]
+GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.objects
+WHERE name = 'DF_LeadAddresses_DPV' AND type = 'D')
+ALTER TABLE [QAL].[LeadAddresses] ADD  CONSTRAINT [DF_LeadAddresses_DPV]  DEFAULT ((0)) FOR [DPV]
 GO
 
 IF NOT EXISTS (SELECT *

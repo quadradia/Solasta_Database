@@ -21,8 +21,8 @@ BEGIN
     /**************
 	 * INITIALIZE
 	 **************/
-    DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerId INT;
-    SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerId
+    DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerTenantId INT;
+    SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerTenantId = DealerTenantId
     FROM [ACC].[fxGetContextUserTable]();
     DECLARE @DeletedTable TABLE (PKID BIGINT NOT NULL);
     INSERT INTO @DeletedTable
@@ -50,7 +50,7 @@ BEGIN
 			, CAST(LeadAddressId AS NVARCHAR(500)) AS LeadAddressId
 			, CAST(CustomerTypeId AS NVARCHAR(500)) AS CustomerTypeId
 			, CAST(MasterFileId AS NVARCHAR(500)) AS MasterFileId
-			, CAST(DealerId AS NVARCHAR(500)) AS DealerId
+			, CAST(DealerTenantId AS NVARCHAR(500)) AS DealerTenantId
 			, CAST(LanguageId AS NVARCHAR(500)) AS LanguageId
 			, CAST(TeamLocationId AS NVARCHAR(500)) AS TeamLocationId
 			, CAST(SeasonId AS NVARCHAR(500)) AS SeasonId
@@ -72,6 +72,8 @@ BEGIN
 			, CAST(PhoneHome AS NVARCHAR(500)) AS PhoneHome
 			, CAST(PhoneWork AS NVARCHAR(500)) AS PhoneWork
 			, CAST(PhoneMobile AS NVARCHAR(500)) AS PhoneMobile
+			, CAST(ExternalSource AS NVARCHAR(500)) AS ExternalSource
+			, CAST(ExternalId AS NVARCHAR(500)) AS ExternalId
 			, CAST(IsActive AS NVARCHAR(500)) AS IsActive
 			, CAST(IsDeleted AS NVARCHAR(500)) AS IsDeleted
                 FROM
@@ -82,7 +84,7 @@ BEGIN
 			, LeadAddressId
 			, CustomerTypeId
 			, MasterFileId
-			, DealerId
+			, DealerTenantId
 			, LanguageId
 			, TeamLocationId
 			, SeasonId
@@ -104,6 +106,8 @@ BEGIN
 			, PhoneHome
 			, PhoneWork
 			, PhoneMobile
+			, ExternalSource
+			, ExternalId
 			, IsActive
 			, IsDeleted
 			)
@@ -124,7 +128,7 @@ BEGIN
 			, CAST(LeadAddressId AS NVARCHAR(500)) AS LeadAddressId
 			, CAST(CustomerTypeId AS NVARCHAR(500)) AS CustomerTypeId
 			, CAST(MasterFileId AS NVARCHAR(500)) AS MasterFileId
-			, CAST(DealerId AS NVARCHAR(500)) AS DealerId
+			, CAST(DealerTenantId AS NVARCHAR(500)) AS DealerTenantId
 			, CAST(LanguageId AS NVARCHAR(500)) AS LanguageId
 			, CAST(TeamLocationId AS NVARCHAR(500)) AS TeamLocationId
 			, CAST(SeasonId AS NVARCHAR(500)) AS SeasonId
@@ -146,6 +150,8 @@ BEGIN
 			, CAST(PhoneHome AS NVARCHAR(500)) AS PhoneHome
 			, CAST(PhoneWork AS NVARCHAR(500)) AS PhoneWork
 			, CAST(PhoneMobile AS NVARCHAR(500)) AS PhoneMobile
+			, CAST(ExternalSource AS NVARCHAR(500)) AS ExternalSource
+			, CAST(ExternalId AS NVARCHAR(500)) AS ExternalId
 			, CAST(IsActive AS NVARCHAR(500)) AS IsActive
 			, CAST(IsDeleted AS NVARCHAR(500)) AS IsDeleted
                 FROM
@@ -156,7 +162,7 @@ BEGIN
 			, LeadAddressId
 			, CustomerTypeId
 			, MasterFileId
-			, DealerId
+			, DealerTenantId
 			, LanguageId
 			, TeamLocationId
 			, SeasonId
@@ -178,6 +184,8 @@ BEGIN
 			, PhoneHome
 			, PhoneWork
 			, PhoneMobile
+			, ExternalSource
+			, ExternalId
 			, IsActive
 			, IsDeleted
 			)

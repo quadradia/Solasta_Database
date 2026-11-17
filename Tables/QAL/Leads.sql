@@ -2,7 +2,10 @@
  * Object Type: Table
  * Schema: QAL
  * Name: Leads
- * Description:
+ * Description: Sales leads. ExternalSource/ExternalId hold the id of the lead in the system it
+ *              came from (GHL = GoHighLevel contact id), unique per tenant and source.
+ *              Sales-assignment columns stay empty until a rep takes the lead.
+ *              Changed by 20261117_0340_AddQAL_LeadIntake.
  * Author:
  * Created: 2026-03-13
  ******************************************************************************/
@@ -14,14 +17,14 @@ BEGIN
 	CREATE TABLE [QAL].[Leads]
 	(
 		[LeadID] [bigint] IDENTITY(1,1) NOT NULL,
-		[LeadAddressId] [bigint] NOT NULL,
+		[LeadAddressId] [bigint] NULL,
 		[CustomerTypeId] [varchar](20) NOT NULL,
 		[MasterFileId] [bigint] NOT NULL,
 		[DealerTenantId] [int] NOT NULL,
 		[LanguageId] [nvarchar](50) NOT NULL,
-		[TeamLocationId] [int] NOT NULL,
-		[SeasonId] [int] NOT NULL,
-		[SalesRepId] [varchar](10) NOT NULL,
+		[TeamLocationId] [int] NULL,
+		[SeasonId] [int] NULL,
+		[SalesRepId] [varchar](10) NULL,
 		[LeadSourceId] [int] NOT NULL,
 		[LeadDispositionId] [int] NOT NULL,
 		[LeadDispositionDateChange] [datetimeoffset](7) NULL,
@@ -30,7 +33,7 @@ BEGIN
 		[MiddleName] [nvarchar](50) NULL,
 		[LastName] [nvarchar](50) NOT NULL,
 		[PostFix] [nvarchar](50) NULL,
-		[Gender] [nvarchar](10) NOT NULL,
+		[Gender] [nvarchar](10) NULL,
 		[SSN] [varchar](50) NULL,
 		[DOB] [date] NULL,
 		[DL] [nvarchar](30) NULL,
@@ -39,6 +42,9 @@ BEGIN
 		[PhoneHome] [nvarchar](20) NULL,
 		[PhoneWork] [nvarchar](30) NULL,
 		[PhoneMobile] [nvarchar](20) NULL,
+		[ExternalSource] [varchar](20) NULL,
+		[ExternalId] [nvarchar](100) NULL,
+		[Notes] [nvarchar](4000) NULL,
 		[IsActive] [bit] NOT NULL,
 		[IsDeleted] [bit] NOT NULL,
 		[CreatedById] [uniqueidentifier] NOT NULL,
@@ -185,4 +191,24 @@ ALTER TABLE [QAL].[Leads] CHECK CONSTRAINT [FK_Leads_Season]
 GO
 
 ALTER TABLE [QAL].[Leads] CHECK CONSTRAINT [FK_Leads_TeamLocations]
+GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.check_constraints
+WHERE name = 'CK_Leads_ExternalSource')
+ALTER TABLE [QAL].[Leads] WITH CHECK ADD CONSTRAINT [CK_Leads_ExternalSource] CHECK ([ExternalId] IS NULL OR [ExternalSource] IS NOT NULL)
+GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.indexes
+WHERE name = 'IX_Leads_DealerTenantId_ExternalSource_ExternalId' AND object_id = OBJECT_ID('QAL.Leads'))
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Leads_DealerTenantId_ExternalSource_ExternalId]
+    ON [QAL].[Leads] ([DealerTenantId], [ExternalSource], [ExternalId]) WHERE [ExternalId] IS NOT NULL
+GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.indexes
+WHERE name = 'IX_Leads_DealerTenantId_Email' AND object_id = OBJECT_ID('QAL.Leads'))
+CREATE NONCLUSTERED INDEX [IX_Leads_DealerTenantId_Email]
+    ON [QAL].[Leads] ([DealerTenantId], [Email]) WHERE [Email] IS NOT NULL
 GO
