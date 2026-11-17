@@ -83,3 +83,10 @@ GO
 
 ALTER TABLE [QAL].[LeadSources] CHECK CONSTRAINT [FK_LeadSources_DealerTenants]
 GO
+
+IF NOT EXISTS (SELECT *
+FROM sys.indexes
+WHERE name = 'IX_LeadSources_DealerTenantId_LeadSourceName' AND object_id = OBJECT_ID('QAL.LeadSources'))
+CREATE UNIQUE NONCLUSTERED INDEX [IX_LeadSources_DealerTenantId_LeadSourceName]
+    ON [QAL].[LeadSources] ([DealerTenantId], [LeadSourceName])
+GO

@@ -21,8 +21,8 @@ BEGIN
     /**************
 	 * INITIALIZE
 	 **************/
-    DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerId INT;
-    SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerId
+    DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerTenantId INT;
+    SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerTenantId = DealerTenantId
     FROM [ACC].[fxGetContextUserTable]();
     DECLARE @DeletedTable TABLE (PKID BIGINT NOT NULL);
     INSERT INTO @DeletedTable
@@ -47,7 +47,7 @@ BEGIN
                 (SELECT
                     MFD.LeadAddressID AS PKID
 			, CAST(LeadAddressID AS NVARCHAR(500)) AS LeadAddressID
-			, CAST(DealerId AS NVARCHAR(500)) AS DealerId
+			, CAST(DealerTenantId AS NVARCHAR(500)) AS DealerTenantId
 			, CAST(LanguageId AS NVARCHAR(500)) AS LanguageId
 			, CAST(AddressValidationVendorId AS NVARCHAR(500)) AS AddressValidationVendorId
 			, CAST(AddressValidationStateId AS NVARCHAR(500)) AS AddressValidationStateId
@@ -93,7 +93,7 @@ BEGIN
 		UNPIVOT (
 			ColumnNewValue FOR ColumnName IN (
 			LeadAddressID
-			, DealerId
+			, DealerTenantId
 			, LanguageId
 			, AddressValidationVendorId
 			, AddressValidationStateId
@@ -149,7 +149,7 @@ BEGIN
                 (SELECT
                     MFD.LeadAddressID AS PKID
 			, CAST(LeadAddressID AS NVARCHAR(500)) AS LeadAddressID
-			, CAST(DealerId AS NVARCHAR(500)) AS DealerId
+			, CAST(DealerTenantId AS NVARCHAR(500)) AS DealerTenantId
 			, CAST(LanguageId AS NVARCHAR(500)) AS LanguageId
 			, CAST(AddressValidationVendorId AS NVARCHAR(500)) AS AddressValidationVendorId
 			, CAST(AddressValidationStateId AS NVARCHAR(500)) AS AddressValidationStateId
@@ -195,7 +195,7 @@ BEGIN
 		UNPIVOT (
 			ColumnOldValue FOR ColumnName IN (
 			LeadAddressID
-			, DealerId
+			, DealerTenantId
 			, LanguageId
 			, AddressValidationVendorId
 			, AddressValidationStateId

@@ -21,8 +21,8 @@ BEGIN
     /**************
 	 * INITIALIZE
 	 **************/
-    DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerId INT;
-    SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerId = DealerId
+    DECLARE @UserID UNIQUEIDENTIFIER, @UserGuidMasked VARCHAR(50), @DealerTenantId INT;
+    SELECT @UserID = UserID, @UserGuidMasked = UserGuidMasked, @DealerTenantId = DealerTenantId
     FROM [ACC].[fxGetContextUserTable]();
     DECLARE @DeletedTable TABLE (PKID BIGINT NOT NULL);
     INSERT INTO @DeletedTable
@@ -47,7 +47,7 @@ BEGIN
                 (SELECT
                     MFD.MasterFileID AS PKID
 			, CAST(MasterFileID AS NVARCHAR(500)) AS MasterFileID
-			, CAST(DealerId AS NVARCHAR(500)) AS DealerId
+			, CAST(DealerTenantId AS NVARCHAR(500)) AS DealerTenantId
 			, CAST(IsActive AS NVARCHAR(500)) AS IsActive
 			, CAST(IsDeleted AS NVARCHAR(500)) AS IsDeleted
                 FROM
@@ -55,7 +55,7 @@ BEGIN
 		UNPIVOT (
 			ColumnNewValue FOR ColumnName IN (
 			MasterFileID
-			, DealerId
+			, DealerTenantId
 			, IsActive
 			, IsDeleted
 			)
@@ -73,7 +73,7 @@ BEGIN
                 (SELECT
                     MFD.MasterFileID AS PKID
 			, CAST(MasterFileID AS NVARCHAR(500)) AS MasterFileID
-			, CAST(DealerId AS NVARCHAR(500)) AS DealerId
+			, CAST(DealerTenantId AS NVARCHAR(500)) AS DealerTenantId
 			, CAST(IsActive AS NVARCHAR(500)) AS IsActive
 			, CAST(IsDeleted AS NVARCHAR(500)) AS IsDeleted
                 FROM
@@ -81,7 +81,7 @@ BEGIN
 		UNPIVOT (
 			ColumnOldValue FOR ColumnName IN (
 			MasterFileID
-			, DealerId
+			, DealerTenantId
 			, IsActive
 			, IsDeleted
 			)
