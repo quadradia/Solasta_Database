@@ -244,10 +244,11 @@ if (-not (Test-Path $MigrationsDir)) {
     exit 1
 }
 
-# Sort alphabetically — the YYYYMMDD_HHMM prefix guarantees chronological order
-$allFiles = Get-ChildItem -Path $MigrationsDir -Filter $MigrationFilter |
-            Where-Object { $_.Extension -eq '.sql' -and $_.Name -notlike '_*' } |
-            Sort-Object Name
+# Sort alphabetically — the YYYYMMDD_HHMM prefix guarantees chronological order.
+# @() keeps this an array when one file matches; StrictMode rejects .Count on a single FileInfo.
+$allFiles = @(Get-ChildItem -Path $MigrationsDir -Filter $MigrationFilter |
+              Where-Object { $_.Extension -eq '.sql' -and $_.Name -notlike '_*' } |
+              Sort-Object Name)
 
 if ($allFiles.Count -eq 0) {
     Write-Log "No migration files found matching filter '$MigrationFilter'." 'Yellow'
