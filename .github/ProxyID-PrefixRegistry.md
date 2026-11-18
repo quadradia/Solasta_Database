@@ -43,6 +43,7 @@ A Proxy-ID takes the form:
 | `FNE` | `FN**` | Financing & funding |
 | `MAC` | `MA**` | Master catalog (Estimates, Quotes, POs) |
 | `MAS` | `MS**` | Monitoring & alarm systems |
+| `MSG` | `MG**` | Messaging: SMS and email conversations |
 | `INE` | `IN**` | Inventory engine |
 | `QAL` | `QL**` | Qualified leads |
 | `RSU` | `RS**` | Resource & user management |
@@ -100,6 +101,13 @@ A Proxy-ID takes the form:
 | `MAMS` | — | Roofline Measurement | *(none; `MAC.Measurements.Proxy`)* | A lead's roofline measurement from a KML file | 2026-11-17 |
 | `MAQT` | seeded | Lead quote | `MAC.QuoteTypes` | A quote for one product made for a lead (`MAC.Quotes.Proxy`) | 2026-11-17 |
 | `MAQS` | — | Quote signature link | *(none; `MAC.QuoteSignatures.Proxy`)* | An e-signature link emailed for a quote, and its signature once signed | 2026-11-17 |
+
+### MSG — Messaging
+
+| Prefix | TypeId | TypeName | Type Table | Description | Registered |
+|--------|--------|----------|------------|-------------|------------|
+| `MGCV` | — | Conversation | *(none; `MSG.Conversations.Proxy`)* | One SMS and email thread with a lead, customer or unknown sender | 2026-11-18 |
+| `MGMS` | — | Message | *(none; `MSG.Messages.Proxy`)* | One SMS, MMS or email in or out | 2026-11-18 |
 
 ### RSU — Resource & Users
 
