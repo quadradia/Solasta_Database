@@ -19,6 +19,7 @@
  * Returns: 0 on success (and a one-row result set with AllocationID); -1 on error
  * Author: Andres Sosa
  * Created: 2026-11-17
+ * Modified: 2026-11-19 - refuses a stock item that has active variants (04190), 20261120_0100
  * Example:
  *   EXEC [INE].[spAllocationCreate] @LeadId = 1042, @LocationId = 1, @StockItemId = 3, @Quantity = 164.5;
  ******************************************************************************/
@@ -65,6 +66,9 @@ BEGIN
         WHERE [StockItemID] = @StockItemId AND [DealerTenantId] = @TenantId AND [IsActive] = 1 AND [IsDeleted] = 0;
         IF @TrackingMode IS NULL
             THROW 50000, N'04112|:|The stock item was not found or is inactive.', 1;
+        IF EXISTS (SELECT 1 FROM [INE].[StockItems]
+                   WHERE [ParentStockItemId] = @StockItemId AND [IsActive] = 1 AND [IsDeleted] = 0)
+            THROW 50000, N'04190|:|The stock item has variants; stock is kept on its variants. Allocate a variant.', 1;
         IF @TrackingMode = 'Quantity' AND @LotId IS NOT NULL
             THROW 50000, N'04114|:|Quantity-tracked items do not have lots.', 1;
         IF @LotId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM [INE].[Lots] WHERE [LotID] = @LotId AND [StockItemId] = @StockItemId)

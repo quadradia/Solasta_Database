@@ -6,10 +6,11 @@
  *              plain CRUD or an INE procedure):
  *              - DealerTenantId cannot change after insert
  *              - the row's tenant must be the session's tenant when one is set
- *              - A stock item can only name a product and default vendor of its own tenant.
+ *              - A stock item can only name a product, default vendor and parent item
+ *                (variants, 20261120_0100) of its own tenant.
  *              Error codes: 04180 wrong tenant for the session, 04181 cross-tenant
  *              reference, 04182 tenant cannot change.
- * Dependencies: INE.fxGetSessionContext, INE.Vendors, MAC.Products
+ * Dependencies: INE.fxGetSessionContext, INE.Vendors, MAC.Products, INE.StockItems
  * Author: Andres Sosa
  * Created: 2026-11-17
  ******************************************************************************/
@@ -40,7 +41,9 @@ BEGIN
                WHERE (I.[ProductId] IS NOT NULL AND NOT EXISTS (SELECT 1 FROM [MAC].[Products] AS P
                   WHERE P.[ProductID] = I.[ProductId] AND P.[DealerTenantId] = I.[DealerTenantId]))
            OR (I.[DefaultVendorId] IS NOT NULL AND NOT EXISTS (SELECT 1 FROM [INE].[Vendors] AS V
-                  WHERE V.[VendorID] = I.[DefaultVendorId] AND V.[DealerTenantId] = I.[DealerTenantId])))
-        THROW 50000, N'04181|:|A stock item can only name a product and default vendor of its own tenant.', 1;
+                  WHERE V.[VendorID] = I.[DefaultVendorId] AND V.[DealerTenantId] = I.[DealerTenantId]))
+           OR (I.[ParentStockItemId] IS NOT NULL AND NOT EXISTS (SELECT 1 FROM [INE].[StockItems] AS PI
+                  WHERE PI.[StockItemID] = I.[ParentStockItemId] AND PI.[DealerTenantId] = I.[DealerTenantId])))
+        THROW 50000, N'04181|:|A stock item can only name a product, default vendor and parent item of its own tenant.', 1;
 END;
 GO
