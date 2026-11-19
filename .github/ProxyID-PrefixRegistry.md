@@ -101,6 +101,8 @@ A Proxy-ID takes the form:
 | `MAMS` | — | Roofline Measurement | *(none; `MAC.Measurements.Proxy`)* | A lead's roofline measurement from a KML file | 2026-11-17 |
 | `MAQT` | seeded | Lead quote | `MAC.QuoteTypes` | A quote for one product made for a lead (`MAC.Quotes.Proxy`) | 2026-11-17 |
 | `MAQS` | — | Quote signature link | *(none; `MAC.QuoteSignatures.Proxy`)* | An e-signature link emailed for a quote, and its signature once signed | 2026-11-17 |
+| `MAIV` | — | Customer invoice | *(none; `MAC.Invoices.Proxy`)* | A bill to a lead or customer, usually made from a signed quote | 2026-11-20 |
+| `MAPY` | — | Customer payment | *(none; `MAC.Payments.Proxy`)* | Money received from a customer, applied to one or more invoices | 2026-11-20 |
 
 ### MSG — Messaging
 
