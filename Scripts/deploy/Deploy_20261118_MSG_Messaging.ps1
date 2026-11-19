@@ -27,6 +27,14 @@
     SQL login to use instead of Windows auth. Pass (Get-Credential) to be prompted; never put a password on the
     command line or in this file.
 
+.PARAMETER CredentialName
+    Load the SQL login saved with Save-DeployCredential.ps1 under this name (DPAPI, your Windows account only),
+    instead of -Credential.
+
+.PARAMETER ConfirmTarget
+    For Prod, the 'server/database' text you would otherwise type at the prompt. It must match exactly; use it only
+    when you have already decided to run against that database (for example when you ask Claude to run it).
+
 .PARAMETER WhatIf
     Show the checks and what would run, without changing anything.
 
@@ -61,6 +69,13 @@ param(
     [System.Management.Automation.PSCredential]$Credential,
 
     [Parameter(Mandatory = $false)]
+    [ValidatePattern('^[A-Za-z0-9_-]+$')]
+    [string]$CredentialName,
+
+    [Parameter(Mandatory = $false)]
+    [string]$ConfirmTarget,
+
+    [Parameter(Mandatory = $false)]
     [switch]$WhatIf
 )
 
@@ -70,6 +85,13 @@ $ErrorActionPreference = 'Stop'
 if (-not $ServerInstance) {
     if ($Environment -eq 'Prod') { throw 'Prod needs -ServerInstance.' }
     $ServerInstance = 'DESKTOP-GAHBRKG'
+}
+
+if ($CredentialName) {
+    if ($Credential) { throw 'Use -Credential or -CredentialName, not both.' }
+    $savedPath = Join-Path $env:APPDATA "Solasta\DeployCredentials\$CredentialName.xml"
+    if (-not (Test-Path $savedPath)) { throw "No saved login '$CredentialName'. Run .\Save-DeployCredential.ps1 -Name $CredentialName first." }
+    $Credential = Import-Clixml -Path $savedPath
 }
 
 $DeployScript = Join-Path $PSScriptRoot 'Deploy_Migrations.ps1'
@@ -145,7 +167,12 @@ if ($Environment -eq 'Prod') {
     Write-Host ''
     Write-Host 'This changes PRODUCTION. Run it in Dev first. Take a backup or snapshot of the database before you go on.' -ForegroundColor Red
     $expected = "$ServerInstance/$Database"
-    $typed = Read-Host "Type '$expected' to continue"
+    if ($ConfirmTarget) {
+        $typed = $ConfirmTarget
+        Write-Host "Confirmed by -ConfirmTarget '$ConfirmTarget'." -ForegroundColor Yellow
+    } else {
+        $typed = Read-Host "Type '$expected' to continue"
+    }
     if ($typed -ne $expected) {
         Write-Host 'Not confirmed. Nothing changed.' -ForegroundColor Yellow
         exit 1
