@@ -7,8 +7,10 @@
  *              - one level deep: a parent cannot itself be a variant, and an item that has
  *                variants cannot become a variant (04191)
  *              - an item can only get its first variant while it holds no stock: nothing on
- *                hand or allocated, no open allocation, no open purchase order line and no
- *                active reorder rule (04192). Stock lives on variants only.
+ *                hand or allocated at a stock-holding location, no open allocation, no open
+ *                purchase order line and no active reorder rule (04192). Stock lives on variants
+ *                only; stock installed at jobs or sent to vendors stays as history.
+ *                INE.spStockItemConvertToVariants empties an item onto its first variant.
  *              - a variant takes its parent's ProductId: written variants are set to their
  *                parent's product, and a parent's product change is copied to its variants.
  *              The same tenant for parent and variant is checked by tr_StockItems_TenantGuard.
@@ -18,6 +20,7 @@
  * Migrations: 20261120_0100_AddINE_PartVariants
  * Author: Andres Sosa
  * Created: 2026-11-19
+ * Modified: 2026-11-19 - only stock-holding locations count (20261120_0300)
  ******************************************************************************/
 SET ANSI_NULLS ON;
 GO
@@ -58,7 +61,10 @@ BEGIN
         FROM @NewParents AS NP
         INNER JOIN [INE].[StockItems] AS P ON P.[StockItemID] = NP.[StockItemId]
         WHERE EXISTS (SELECT 1 FROM [INE].[StockBalances] AS SB
-                      WHERE SB.[StockItemId] = NP.[StockItemId] AND (SB.[QuantityOnHand] <> 0 OR SB.[QuantityAllocated] <> 0))
+                      INNER JOIN [INE].[Locations] AS L ON L.[LocationID] = SB.[LocationId]
+                      INNER JOIN [INE].[LocationTypes] AS LT ON LT.[LocationTypeID] = L.[LocationTypeId]
+                      WHERE SB.[StockItemId] = NP.[StockItemId] AND LT.[IsStockHolding] = 1
+                        AND (SB.[QuantityOnHand] <> 0 OR SB.[QuantityAllocated] <> 0))
            OR EXISTS (SELECT 1 FROM [INE].[Allocations] AS A
                       WHERE A.[StockItemId] = NP.[StockItemId] AND A.[Status] = 'Open')
            OR EXISTS (SELECT 1 FROM [INE].[PurchaseOrderLines] AS POL

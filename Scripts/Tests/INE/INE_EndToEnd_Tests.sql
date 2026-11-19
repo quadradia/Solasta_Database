@@ -7,7 +7,8 @@
  *              rules, allocations, issuing to a job, reversals, the append-only ledger,
  *              stock counts, scrap, returns to vendor, PO close/reopen and a final
  *              ledger-vs-balance drift check, and part variants (parents hold no stock,
- *              one level deep, product inheritance, attributes). Prints PASS/FAIL per check.
+ *              one level deep, product inheritance, attributes, converting a stocked item to colors).
+ *              Prints PASS/FAIL per check.
  *              DESTRUCTIVE: it writes test rows and relaxes QAL.Leads FKs. Run it only in
  *              a throwaway copy of the database whose name contains TEST, e.g.
  *                BACKUP DATABASE SOL_MAIN TO DISK = N'...\SOL_MAIN.bak' WITH COPY_ONLY;
@@ -15,7 +16,7 @@
  *              then apply the INE migrations and run:
  *                sqlcmd -E -S . -d SOL_INE_TEST -i Scripts\Tests\INE\INE_EndToEnd_Tests.sql
  *              Uses the dev Solasta Lighting tenant and its first user.
- * Dependencies: INE migrations 20261117_1800, 20261117_1810, 20261117_1900 and 20261120_0100,
+ * Dependencies: INE migrations 20261117_1800, 20261117_1810, 20261117_1900, 20261120_0100 and 20261120_0300,
  *               ACC.spSessionContextCreate
  * Author: Andres Sosa
  * Created: 2026-11-17
@@ -437,6 +438,103 @@ SET @OkX = CASE WHEN COL_LENGTH(N'MAC.QuoteLines', N'StockItemId') IS NOT NULL A
                  AND COL_LENGTH(N'MAC.QuoteLines', N'VariantPriceAdder') IS NOT NULL
                  AND OBJECT_ID(N'MAC.CK_QuoteLines_VariantSnapshot', N'C') IS NOT NULL THEN 1 ELSE 0 END;
 EXEC #Check @Ok = @OkX, @Label = N'MAC.QuoteLines has the variant snapshot columns';
+GO
+
+-- converting a stocked item to colors (20261120_0300, INE.spStockItemConvertToVariants)
+DECLARE @OkX BIT;
+DECLARE @MAIN INT = (SELECT LocationID FROM INE.Locations WHERE Code = N'MAIN' AND DealerTenantId = 3);
+DECLARE @VAN INT = (SELECT LocationID FROM INE.Locations WHERE Code = N'VAN-01');
+DECLARE @V INT = (SELECT VendorID FROM INE.Vendors WHERE Code = N'GVL');
+INSERT INTO INE.StockItems (DealerTenantId, Sku, Name, TrackingMode, UnitOfMeasure, StandardCost) VALUES
+    (3, N'CV-RAIL', N'Rail to convert', 'Quantity', 'ft', 2.00),
+    (3, N'CV-REEL', N'Reel to convert', 'Lot', 'each', 4.00),
+    (3, N'CV-CTRL', N'Controller to convert', 'Serial', 'each', 80.00);
+DECLARE @R INT = (SELECT StockItemID FROM INE.StockItems WHERE Sku = N'CV-RAIL');
+DECLARE @L INT = (SELECT StockItemID FROM INE.StockItems WHERE Sku = N'CV-REEL');
+DECLARE @C INT = (SELECT StockItemID FROM INE.StockItems WHERE Sku = N'CV-CTRL');
+DECLARE @J NVARCHAR(MAX) = CONCAT(N'{"movementType":"AdjustIn","toLocationId":', @MAIN, N',"lines":[',
+    N'{"stockItemId":', @R, N',"quantity":100},{"stockItemId":', @L, N',"quantity":10,"lotNumber":"CV-R1"},',
+    N'{"stockItemId":', @L, N',"quantity":5,"lotNumber":"CV-R2"},{"stockItemId":', @C, N',"serialNumbers":["CV-S1","CV-S2"]}]}');
+EXEC INE.spMovementPost @MovementJson = @J, @ReturnResult = 0;
+SET @J = CONCAT(N'{"movementType":"AdjustIn","toLocationId":', @VAN, N',"lines":[{"stockItemId":', @R, N',"quantity":20}]}');
+EXEC INE.spMovementPost @MovementJson = @J, @ReturnResult = 0;
+-- 5 ft installed at the job stays on the item as history
+SET @J = CONCAT(N'{"movementType":"IssueToJob","fromLocationId":', @MAIN, N',"toLocationId":', (SELECT LocationID FROM INE.Locations WHERE Code = N'JOB-900001'),
+    N',"lines":[{"stockItemId":', @R, N',"quantity":5}]}');
+EXEC INE.spMovementPost @MovementJson = @J, @ReturnResult = 0;
+DECLARE @A BIGINT;
+EXEC INE.spAllocationCreate @LeadId = 900001, @LocationId = @MAIN, @StockItemId = @R, @Quantity = 30, @Notes = N'for the Smith job', @AllocationId = @A OUTPUT;
+INSERT INTO INE.StockLevels (DealerTenantId, StockItemId, LocationId, ReorderPoint, MaximumQuantity) VALUES (3, @R, @MAIN, 50, 200);
+INSERT INTO INE.PurchaseOrders (DealerTenantId, VendorId, ShipToLocationId, PONumber) VALUES (3, @V, @MAIN, N'PO-CV-DRAFT'), (3, @V, @MAIN, N'PO-CV-SENT');
+DECLARE @PD BIGINT = (SELECT PurchaseOrderID FROM INE.PurchaseOrders WHERE PONumber = N'PO-CV-DRAFT');
+DECLARE @PS BIGINT = (SELECT PurchaseOrderID FROM INE.PurchaseOrders WHERE PONumber = N'PO-CV-SENT');
+INSERT INTO INE.PurchaseOrderLines (PurchaseOrderId, LineNumber, StockItemId, QuantityOrdered, UnitCost) VALUES (@PD, 1, @R, 50, 2), (@PS, 1, @R, 40, 2);
+EXEC INE.spPurchaseOrderSetStatus @PurchaseOrderId = @PS, @Action = 'Submit';
+
+DECLARE @Sql NVARCHAR(MAX) = CONCAT(N'EXEC INE.spStockItemConvertToVariants @StockItemId = ', @R, N', @VariantName = N''Black'', @Sku = N''RAIL-STD''');
+EXEC #Expect @Sql, N'04195', N'convert: a SKU in use is refused';
+SET @Sql = CONCAT(N'EXEC INE.spStockItemConvertToVariants @StockItemId = ', (SELECT StockItemID FROM INE.StockItems WHERE Sku = N'LP-100-BLK'), N', @VariantName = N''Matte'', @Sku = N''CV-X''');
+EXEC #Expect @Sql, N'04191', N'convert: a variant cannot be converted';
+SET @Sql = CONCAT(N'EXEC INE.spStockItemConvertToVariants @StockItemId = ', (SELECT StockItemID FROM INE.StockItems WHERE Sku = N'LP-100'), N', @VariantName = N''Red'', @Sku = N''CV-Y''');
+EXEC #Expect @Sql, N'04194', N'convert: an item that already has variants is refused';
+
+DECLARE @RB INT;
+EXEC INE.spStockItemConvertToVariants @StockItemId = @R, @VariantName = N'Black', @Sku = N'cv-rail-blk', @PriceAdder = 1.5, @VariantStockItemId = @RB OUTPUT;
+SET @OkX = CASE WHEN (SELECT ParentStockItemId FROM INE.StockItems WHERE StockItemID = @RB) = @R
+                 AND (SELECT Sku + '|' + VariantName + '|' + Name FROM INE.StockItems WHERE StockItemID = @RB) = N'CV-RAIL-BLK|Black|Rail to convert - Black'
+                 AND (SELECT PriceAdder FROM INE.StockItems WHERE StockItemID = @RB) = 1.5
+                 AND EXISTS (SELECT 1 FROM INE.StockItemVariantAttributes WHERE StockItemId = @RB AND AttributeName = N'Color' AND AttributeValue = N'Black')
+            THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'convert: the item gets its first variant';
+SET @OkX = CASE WHEN (SELECT QuantityOnHand FROM INE.StockBalances WHERE StockItemId = @RB AND LocationId = @MAIN) = 95
+                 AND (SELECT QuantityAllocated FROM INE.StockBalances WHERE StockItemId = @RB AND LocationId = @MAIN) = 30
+                 AND (SELECT QuantityOnHand FROM INE.StockBalances WHERE StockItemId = @RB AND LocationId = @VAN) = 20
+                 AND NOT EXISTS (SELECT 1 FROM INE.vwStockOnHand WHERE StockItemId = @R AND IsStockHolding = 1)
+                 AND (SELECT QuantityOnHand FROM INE.vwStockOnHand WHERE StockItemId = @R AND IsStockHolding = 0) = 5
+            THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'convert: stock moved per location, installed stock stays as history';
+SET @OkX = CASE WHEN (SELECT Status FROM INE.Allocations WHERE AllocationID = @A) = 'Cancelled'
+                 AND EXISTS (SELECT 1 FROM INE.Allocations WHERE StockItemId = @RB AND Status = 'Open' AND QuantityAllocated = 30
+                               AND LeadId = 900001 AND LocationId = @MAIN AND Notes = N'for the Smith job')
+                 AND EXISTS (SELECT 1 FROM INE.StockLevels WHERE StockItemId = @RB AND LocationId = @MAIN AND ReorderPoint = 50)
+                 AND NOT EXISTS (SELECT 1 FROM INE.StockLevels WHERE StockItemId = @R)
+                 AND (SELECT COUNT(*) FROM INE.PurchaseOrderLines WHERE StockItemId = @RB) = 2
+                 AND NOT EXISTS (SELECT 1 FROM INE.PurchaseOrderLines WHERE StockItemId = @R)
+                 AND (SELECT COUNT(*) FROM INE.Movements WHERE Reference = N'CONVERT CV-RAIL > CV-RAIL-BLK') = 4
+            THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'convert: allocation, reorder rule and open PO lines (draft and submitted) follow, moves are in the ledger';
+DECLARE @Again INT;
+EXEC INE.spStockItemConvertToVariants @StockItemId = @R, @VariantName = N'Black', @Sku = N'CV-RAIL-BLK', @VariantStockItemId = @Again OUTPUT;
+SET @OkX = CASE WHEN @Again = @RB AND (SELECT COUNT(*) FROM INE.StockItems WHERE ParentStockItemId = @R) = 1 THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'convert: calling it again with the same color does nothing';
+SET @Sql = CONCAT(N'EXEC INE.spStockItemConvertToVariants @StockItemId = ', @R, N', @VariantName = N''White'', @Sku = N''CV-RAIL-WHT''');
+EXEC #Expect @Sql, N'04194', N'convert: once converted, more colors are added normally';
+SET @Sql = CONCAT(N'UPDATE INE.PurchaseOrderLines SET StockItemId = ', @R, N' WHERE StockItemId = ', @RB, N' AND PurchaseOrderId = ', @PS);
+EXEC #Expect @Sql, N'04171', N'convert: submitted PO lines are still locked outside a conversion';
+-- the submitted PO line is received as the variant
+DECLARE @PL BIGINT = (SELECT PurchaseOrderLineID FROM INE.PurchaseOrderLines WHERE PurchaseOrderId = @PS);
+SET @J = CONCAT(N'{"purchaseOrderId":', @PS, N',"lines":[{"stockItemId":', @RB, N',"quantity":40,"purchaseOrderLineId":', @PL, N'}]}');
+EXEC INE.spReceiptPost @ReceiptJson = @J;
+SET @OkX = CASE WHEN (SELECT QuantityOnHand FROM INE.StockBalances WHERE StockItemId = @RB AND LocationId = @MAIN) = 135 THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'convert: the moved PO line is received as the variant';
+
+DECLARE @LB INT, @CB INT;
+EXEC INE.spStockItemConvertToVariants @StockItemId = @L, @VariantName = N'Warm white', @Sku = N'CV-REEL-WWT', @VariantStockItemId = @LB OUTPUT;
+EXEC INE.spStockItemConvertToVariants @StockItemId = @C, @VariantName = N'Black', @Sku = N'CV-CTRL-BLK', @VariantStockItemId = @CB OUTPUT;
+SET @OkX = CASE WHEN (SELECT SB.QuantityOnHand FROM INE.StockBalances AS SB INNER JOIN INE.Lots AS LO ON LO.LotID = SB.LotId
+                      WHERE SB.StockItemId = @LB AND LO.LotNumber = N'CV-R1') = 10
+                 AND (SELECT SB.QuantityOnHand FROM INE.StockBalances AS SB INNER JOIN INE.Lots AS LO ON LO.LotID = SB.LotId
+                      WHERE SB.StockItemId = @LB AND LO.LotNumber = N'CV-R2') = 5
+                 AND (SELECT COUNT(*) FROM INE.SerialUnits WHERE StockItemId = @CB AND Status = 'InStock' AND CurrentLocationId = @MAIN
+                      AND SerialNumber IN (N'CV-S1', N'CV-S2')) = 2
+                 AND (SELECT COUNT(*) FROM INE.SerialUnits WHERE StockItemId = @C AND Status = 'Voided') = 2
+            THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'convert: lots keep their numbers and serial units their serial numbers';
+SET @OkX = CASE WHEN NOT EXISTS (SELECT 1 FROM INE.vwStockBalanceDrift) THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'convert: StockBalances still match the ledger';
+SET @OkX = CASE WHEN COL_LENGTH(N'MAC.QuoteLines', N'VariantChosenBy') IS NOT NULL
+                 AND OBJECT_ID(N'MAC.FK_QuoteLines_QuoteSignatures', N'F') IS NOT NULL THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'MAC.QuoteLines records who chose the color';
 GO
 
 -- 14. PO close / reopen; 15. drift and on-hand
