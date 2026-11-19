@@ -11,9 +11,12 @@
  *              A line whose product has variants (INE.StockItems parents linked by ProductId) names
  *              the chosen variant in StockItemId and snapshots its VariantName and PriceAdder
  *              (VariantPriceAdder); UnitPrice is then the product price plus that adder. The API
- *              blocks signing while such a line has no variant chosen.
+ *              blocks signing while such a line has no variant chosen. VariantChosenBy/Date say who
+ *              picked it: Staff in the quote builder, or the Customer on the signing page, with
+ *              the signing link used (VariantChosenSignatureId) (20261120_0300).
  * Dependencies: MAC.Quotes, MAC.Products, INE.StockItems
- * Migrations: 20261117_2230_AddMAC_QuoteBuilder, 20261120_0100_AddINE_PartVariants
+ * Migrations: 20261117_2230_AddMAC_QuoteBuilder, 20261120_0100_AddINE_PartVariants,
+ *             20261120_0300_AddINE_ConvertToVariantsAndQuoteColorChoice
  * API mappings: Models/MAC/QuoteLine.cs is written by hand; remove it when the
  *               AutoGenerator produces an equivalent.
  ******************************************************************************/
@@ -39,6 +42,10 @@ BEGIN
         -- Snapshots of the variant at quote time: its name (e.g. Black) and per-unit price adder.
         [VariantName] [nvarchar](50) NULL,
         [VariantPriceAdder] [decimal](19, 4) NULL,
+        -- Who chose the variant: Staff (quote builder) or Customer (signing page), when, and with which link.
+        [VariantChosenBy] [varchar](10) NULL,
+        [VariantChosenDate] [datetimeoffset](7) NULL,
+        [VariantChosenSignatureId] [bigint] NULL,
         [Sku] [varchar](20) NOT NULL,
         [Description] [nvarchar](200) NOT NULL,
         -- Rail lines: measured feet before the allowance, when known.
@@ -68,13 +75,15 @@ BEGIN
         CONSTRAINT [FK_QuoteLines_Quotes] FOREIGN KEY ([QuoteId]) REFERENCES [MAC].[Quotes] ([QuoteID]),
         CONSTRAINT [FK_QuoteLines_Products] FOREIGN KEY ([ProductId]) REFERENCES [MAC].[Products] ([ProductID]),
         CONSTRAINT [FK_QuoteLines_StockItems] FOREIGN KEY ([StockItemId]) REFERENCES [INE].[StockItems] ([StockItemID]),
+        CONSTRAINT [FK_QuoteLines_QuoteSignatures] FOREIGN KEY ([VariantChosenSignatureId]) REFERENCES [MAC].[QuoteSignatures] ([QuoteSignatureID]),
         CONSTRAINT [CK_QuoteLines_LineType] CHECK ([LineType] IN ('Rail', 'Fixed', 'AddOn')),
         CONSTRAINT [CK_QuoteLines_Location] CHECK ([LineType] <> 'Rail' OR [Location] IS NOT NULL),
         CONSTRAINT [CK_QuoteLines_Quantity] CHECK ([Quantity] >= 0),
         CONSTRAINT [CK_QuoteLines_UnitPrice] CHECK ([UnitPrice] >= 0),
         CONSTRAINT [CK_QuoteLines_MeasuredFeet] CHECK ([MeasuredFeet] IS NULL OR [MeasuredFeet] >= 0),
         CONSTRAINT [CK_QuoteLines_VariantPriceAdder] CHECK ([VariantPriceAdder] IS NULL OR [VariantPriceAdder] >= 0),
-        CONSTRAINT [CK_QuoteLines_VariantSnapshot] CHECK ([StockItemId] IS NOT NULL OR ([VariantName] IS NULL AND [VariantPriceAdder] IS NULL))
+        CONSTRAINT [CK_QuoteLines_VariantSnapshot] CHECK ([StockItemId] IS NOT NULL OR ([VariantName] IS NULL AND [VariantPriceAdder] IS NULL)),
+        CONSTRAINT [CK_QuoteLines_VariantChosenBy] CHECK ([VariantChosenBy] IS NULL OR [VariantChosenBy] IN ('Staff', 'Customer'))
     );
 END;
 
