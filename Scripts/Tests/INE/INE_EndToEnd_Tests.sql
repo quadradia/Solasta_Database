@@ -6,7 +6,8 @@
  *              receiving (partial, over-receipt, duplicate serials), transfers, location
  *              rules, allocations, issuing to a job, reversals, the append-only ledger,
  *              stock counts, scrap, returns to vendor, PO close/reopen and a final
- *              ledger-vs-balance drift check. Prints PASS/FAIL per check.
+ *              ledger-vs-balance drift check, and part variants (parents hold no stock,
+ *              one level deep, product inheritance, attributes). Prints PASS/FAIL per check.
  *              DESTRUCTIVE: it writes test rows and relaxes QAL.Leads FKs. Run it only in
  *              a throwaway copy of the database whose name contains TEST, e.g.
  *                BACKUP DATABASE SOL_MAIN TO DISK = N'...\SOL_MAIN.bak' WITH COPY_ONLY;
@@ -14,7 +15,7 @@
  *              then apply the INE migrations and run:
  *                sqlcmd -E -S . -d SOL_INE_TEST -i Scripts\Tests\INE\INE_EndToEnd_Tests.sql
  *              Uses the dev Solasta Lighting tenant and its first user.
- * Dependencies: INE migrations 20261117_1800, 20261117_1810 and 20261117_1900,
+ * Dependencies: INE migrations 20261117_1800, 20261117_1810, 20261117_1900 and 20261120_0100,
  *               ACC.spSessionContextCreate
  * Author: Andres Sosa
  * Created: 2026-11-17
@@ -300,7 +301,6 @@ SET @OkX = CASE WHEN (SELECT Status FROM INE.Allocations WHERE AllocationID = @A
                  AND (SELECT QuantityAllocated FROM INE.StockBalances WHERE LocationId = @MAIN AND StockItemId = @RAIL) = 25 THEN 1 ELSE 0 END;
 EXEC #Check @Ok = @OkX, @Label = N'reversed issue: allocation re-opened and stock reserved again';
 EXEC INE.spAllocationCancel @AllocationId = @A;
-GO
 -- a reversed issue does not bring back an allocation that was cancelled in between
 EXEC INE.spAllocationCreate @LeadId = 900001, @LocationId = @MAIN, @StockItemId = @RAIL, @Quantity = 25, @AllocationId = @A OUTPUT;
 SET @J = CONCAT(N'{"movementType":"IssueToJob","fromLocationId":', @MAIN, N',"toLocationId":', @JOB, N',"lines":[{"stockItemId":', @RAIL, N',"quantity":10,"allocationId":', @A, N'}]}');
@@ -333,6 +333,110 @@ SET @OkX = CASE WHEN EXISTS (SELECT 1 FROM AUD.AuditActions AS A
                  AND EXISTS (SELECT 1 FROM AUD.AuditActions WHERE SchemaName = 'INE' AND TableName = 'PurchaseOrders' AND AuditActionTypeId = 'INSERT')
             THEN 1 ELSE 0 END;
 EXEC #Check @Ok = @OkX, @Label = N'audit triggers record inserts and updates (NULL -> value) with the session user';
+GO
+
+-- part variants (20261120_0100): parents are catalog entries, stock lives on variants
+DECLARE @OkX BIT;
+DECLARE @MAIN INT = (SELECT LocationID FROM INE.Locations WHERE Code = N'MAIN' AND DealerTenantId = 3);
+DECLARE @P1 INT = (SELECT MIN(ProductID) FROM MAC.Products WHERE DealerTenantId = 3);
+DECLARE @P2 INT = (SELECT MAX(ProductID) FROM MAC.Products WHERE DealerTenantId = 3);
+-- an open count that names LP-100 before it has variants (posted at the end of this block)
+INSERT INTO INE.StockItems (DealerTenantId, ProductId, Sku, Name, TrackingMode, UnitOfMeasure) VALUES (3, @P1, N'LP-100', N'Light pod 100', 'Quantity', 'each');
+DECLARE @LP INT = SCOPE_IDENTITY();
+INSERT INTO INE.StockCounts (DealerTenantId, LocationId) VALUES (3, @MAIN);
+DECLARE @SC BIGINT = SCOPE_IDENTITY();
+INSERT INTO INE.StockCountLines (StockCountId, StockItemId, CountedQuantity) VALUES (@SC, @LP, 0);
+INSERT INTO INE.StockItems (DealerTenantId, ParentStockItemId, VariantName, PriceAdder, Sku, Name, TrackingMode, UnitOfMeasure) VALUES
+    (3, @LP, N'Black', 2.50, N'LP-100-BLK', N'Light pod 100 - Black', 'Quantity', 'each'),
+    (3, @LP, N'White', 0, N'LP-100-WHT', N'Light pod 100 - White', 'Quantity', 'each');
+DECLARE @BLK INT = (SELECT StockItemID FROM INE.StockItems WHERE Sku = N'LP-100-BLK');
+SET @OkX = CASE WHEN (SELECT COUNT(*) FROM INE.StockItems WHERE ParentStockItemId = @LP AND ProductId = @P1) = 2 THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'variants created and take the parent''s product';
+UPDATE INE.StockItems SET ProductId = @P2 WHERE StockItemID = @LP;
+SET @OkX = CASE WHEN (SELECT COUNT(*) FROM INE.StockItems WHERE ParentStockItemId = @LP AND ProductId = @P2) = 2 THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'a parent''s product change is copied to its variants';
+UPDATE INE.StockItems SET ProductId = @P1 WHERE StockItemID = @BLK;
+SET @OkX = CASE WHEN (SELECT ProductId FROM INE.StockItems WHERE StockItemID = @BLK) = @P2 THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'a variant cannot take another product than its parent''s';
+
+DECLARE @Sql NVARCHAR(MAX);
+SET @Sql = CONCAT(N'INSERT INTO INE.StockItems (DealerTenantId, ParentStockItemId, VariantName, Sku, Name) VALUES (3, ', @LP, N', N''Black'', N''LP-100-BK2'', N''Dup'')');
+EXEC #Expect @Sql, N'UQ_StockItems_ParentStockItemId_VariantName', N'variant names are unique per parent';
+SET @Sql = CONCAT(N'INSERT INTO INE.StockItems (DealerTenantId, ParentStockItemId, Sku, Name) VALUES (3, ', @LP, N', N''LP-100-XXX'', N''No name'')');
+EXEC #Expect @Sql, N'CK_StockItems_VariantName', N'a variant needs a VariantName';
+SET @Sql = CONCAT(N'INSERT INTO INE.StockItems (DealerTenantId, ParentStockItemId, VariantName, PriceAdder, Sku, Name) VALUES (3, ', @LP, N', N''Red'', -1, N''LP-100-RED'', N''Red'')');
+EXEC #Expect @Sql, N'CK_StockItems_PriceAdder', N'price adder cannot be negative';
+SET @Sql = CONCAT(N'UPDATE INE.StockItems SET ParentStockItemId = StockItemID, VariantName = N''Self'' WHERE StockItemID = ', @LP);
+EXEC #Expect @Sql, N'CK_StockItems_ParentNotSelf', N'an item cannot be its own parent';
+SET @Sql = CONCAT(N'INSERT INTO INE.StockItems (DealerTenantId, ParentStockItemId, VariantName, Sku, Name) VALUES (3, ', @BLK, N', N''Matte'', N''LP-100-BLK-M'', N''Nested'')');
+EXEC #Expect @Sql, N'04191', N'variants are one level deep (variant of a variant)';
+SET @Sql = CONCAT(N'UPDATE INE.StockItems SET ParentStockItemId = (SELECT StockItemID FROM INE.StockItems WHERE Sku = N''CTRL-WIFI''), VariantName = N''Pod'' WHERE StockItemID = ', @LP);
+EXEC #Expect @Sql, N'04191', N'variants are one level deep (a parent cannot become a variant)';
+EXEC #Expect N'INSERT INTO INE.StockItems (DealerTenantId, ParentStockItemId, VariantName, Sku, Name) SELECT 3, StockItemID, N''Black'', N''RAIL-STD-BLK'', N''Rail - Black'' FROM INE.StockItems WHERE Sku = N''RAIL-STD''',
+    N'04192', N'an item that holds stock cannot get variants';
+
+-- stock lives on variants only
+DECLARE @J NVARCHAR(MAX) = CONCAT(N'{"movementType":"AdjustIn","toLocationId":', @MAIN, N',"lines":[{"stockItemId":', @LP, N',"quantity":10}]}');
+SET @Sql = CONCAT(N'EXEC INE.spMovementPost @MovementJson = N''', @J, N'''');
+EXEC #Expect @Sql, N'04190', N'a movement cannot name a parent';
+SET @J = CONCAT(N'{"locationId":', @MAIN, N',"lines":[{"stockItemId":', @LP, N',"quantity":10}]}');
+SET @Sql = CONCAT(N'EXEC INE.spReceiptPost @ReceiptJson = N''', @J, N'''');
+EXEC #Expect @Sql, N'04190', N'a receipt cannot name a parent';
+SET @J = CONCAT(N'{"movementType":"AdjustIn","toLocationId":', @MAIN, N',"lines":[{"stockItemId":', @BLK, N',"quantity":10}]}');
+EXEC INE.spMovementPost @MovementJson = @J, @ReturnResult = 0;
+SET @OkX = CASE WHEN (SELECT QuantityOnHand FROM INE.vwStockOnHand WHERE StockItemId = @BLK AND LocationId = @MAIN) = 10
+                 AND (SELECT VariantName FROM INE.vwStockOnHand WHERE StockItemId = @BLK AND LocationId = @MAIN) = N'Black'
+                 AND (SELECT ParentStockItemId FROM INE.vwStockOnHand WHERE StockItemId = @BLK AND LocationId = @MAIN) = @LP THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'a variant takes stock; vwStockOnHand shows parent and variant name';
+SET @Sql = CONCAT(N'EXEC INE.spAllocationCreate @LeadId = 900001, @LocationId = ', @MAIN, N', @StockItemId = ', @LP, N', @Quantity = 1');
+EXEC #Expect @Sql, N'04190', N'an allocation cannot name a parent';
+INSERT INTO INE.PurchaseOrders (DealerTenantId, VendorId, ShipToLocationId, PONumber)
+VALUES (3, (SELECT VendorID FROM INE.Vendors WHERE Code = N'GVL'), @MAIN, N'PO-VAR');
+DECLARE @PO BIGINT = SCOPE_IDENTITY();
+SET @Sql = CONCAT(N'INSERT INTO INE.PurchaseOrderLines (PurchaseOrderId, LineNumber, StockItemId, QuantityOrdered, UnitCost) VALUES (', @PO, N', 1, ', @LP, N', 5, 1)');
+EXEC #Expect @Sql, N'04190', N'a purchase order line cannot name a parent';
+INSERT INTO INE.PurchaseOrderLines (PurchaseOrderId, LineNumber, StockItemId, QuantityOrdered, UnitCost) VALUES (@PO, 1, @BLK, 5, 1);
+EXEC #Check @Ok = 1, @Label = N'a purchase order line can name a variant';
+SET @Sql = CONCAT(N'INSERT INTO INE.StockLevels (DealerTenantId, StockItemId, LocationId, ReorderPoint, MaximumQuantity) VALUES (3, ', @LP, N', ', @MAIN, N', 1, 5)');
+EXEC #Expect @Sql, N'04190', N'a reorder rule cannot name a parent';
+SET @Sql = CONCAT(N'INSERT INTO INE.StockCountLines (StockCountId, StockItemId, CountedQuantity) VALUES (', @SC, N', ', @LP, N', 1)');
+EXEC #Expect @Sql, N'04190', N'a count line cannot name a parent';
+SET @Sql = CONCAT(N'EXEC INE.spStockCountPost @StockCountId = ', @SC);
+EXEC #Expect @Sql, N'04190', N'a count with a line written before the item got variants is not posted';
+DELETE FROM INE.StockCountLines WHERE StockCountId = @SC;
+DELETE FROM INE.StockCounts WHERE StockCountID = @SC;
+
+-- variant attributes
+INSERT INTO INE.StockItemVariantAttributes (DealerTenantId, StockItemId, AttributeName, AttributeValue) VALUES (3, @BLK, N'Color', N'Black');
+SET @Sql = CONCAT(N'INSERT INTO INE.StockItemVariantAttributes (DealerTenantId, StockItemId, AttributeName, AttributeValue) VALUES (3, ', @BLK, N', N''Color'', N''Jet'')');
+EXEC #Expect @Sql, N'UQ_StockItemVariantAttributes_StockItemId_AttributeName', N'one value per attribute per variant';
+SET @Sql = CONCAT(N'INSERT INTO INE.StockItemVariantAttributes (DealerTenantId, StockItemId, AttributeName, AttributeValue) VALUES (3, ', @LP, N', N''Color'', N''Any'')');
+EXEC #Expect @Sql, N'04193', N'only variants have attributes';
+SET @Sql = CONCAT(N'INSERT INTO INE.StockItemVariantAttributes (DealerTenantId, StockItemId, AttributeName, AttributeValue) SELECT MIN(DealerTenantID), ', @BLK, N', N''Finish'', N''Matte'' FROM ACC.DealerTenants WHERE DealerTenantID <> 3');
+EXEC #Expect @Sql, N'04180', N'attribute for another tenant than the session is rejected';
+DECLARE @User UNIQUEIDENTIFIER = (SELECT UserId FROM INE.fxGetSessionContext());
+SET @OkX = CASE WHEN EXISTS (SELECT 1 FROM AUD.AuditActions WHERE SchemaName = 'INE' AND TableName = 'StockItemVariantAttributes'
+                                AND AuditActionTypeId = 'INSERT' AND CreatedById = @User)
+                 AND EXISTS (SELECT 1 FROM AUD.AuditActions AS A INNER JOIN AUD.AuditActionColumns AS C ON C.AuditActionId = A.AuditActionID
+                             WHERE A.SchemaName = 'INE' AND A.TableName = 'StockItems' AND A.PrimaryKeyIdentifier = CAST(@BLK AS VARCHAR(50))
+                               AND C.ColumnName = N'VariantName' AND C.NewValue = N'Black') THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'audit triggers record variant attributes and variant columns';
+GO
+-- a parent of another tenant (the session is cleared so the tenant check of the session does not fire first)
+DECLARE @OkX BIT;
+EXEC sys.sp_set_session_context @key = N'UserContext', @value = NULL;
+EXEC #Expect N'INSERT INTO INE.StockItems (DealerTenantId, ParentStockItemId, VariantName, Sku, Name) SELECT (SELECT MIN(DealerTenantID) FROM ACC.DealerTenants WHERE DealerTenantID <> 3), StockItemID, N''Green'', N''LP-100-GRN'', N''Other tenant'' FROM INE.StockItems WHERE Sku = N''LP-100''',
+    N'04181', N'a variant and its parent share a tenant';
+DECLARE @Rc INT, @TestUser UNIQUEIDENTIFIER = (SELECT TOP (1) UserID FROM ACC.Users WHERE DealerTenantId = 3 AND IsActive = 1 AND IsDeleted = 0 ORDER BY CreatedDate);
+EXEC @Rc = ACC.spSessionContextCreate @IdentityID = @TestUser, @TenantProxy = 'SOLA:3176D:198205F5-C1E1-4D80-8BFB-C7C6688BFDB6';
+-- deactivated variants make the parent an ordinary item again
+UPDATE INE.StockItems SET IsActive = 0 WHERE Sku IN (N'LP-100-WHT');
+EXEC #Expect N'INSERT INTO INE.StockLevels (DealerTenantId, StockItemId, LocationId, ReorderPoint, MaximumQuantity) SELECT 3, StockItemID, (SELECT LocationID FROM INE.Locations WHERE Code = N''MAIN'' AND DealerTenantId = 3), 1, 5 FROM INE.StockItems WHERE Sku = N''LP-100''',
+    N'04190', N'one active variant is enough to keep the parent stock-free';
+SET @OkX = CASE WHEN COL_LENGTH(N'MAC.QuoteLines', N'StockItemId') IS NOT NULL AND COL_LENGTH(N'MAC.QuoteLines', N'VariantName') IS NOT NULL
+                 AND COL_LENGTH(N'MAC.QuoteLines', N'VariantPriceAdder') IS NOT NULL
+                 AND OBJECT_ID(N'MAC.CK_QuoteLines_VariantSnapshot', N'C') IS NOT NULL THEN 1 ELSE 0 END;
+EXEC #Check @Ok = @OkX, @Label = N'MAC.QuoteLines has the variant snapshot columns';
 GO
 
 -- 14. PO close / reopen; 15. drift and on-hand

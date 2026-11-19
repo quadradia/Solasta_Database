@@ -10,6 +10,7 @@
  *               INE.StockItems, INE.Lots, INE.SerialUnits
  * Author: Andres Sosa
  * Created: 2026-11-17
+ * Modified: 2026-11-19 - exposes ParentStockItemId and VariantName (part variants, 20261120_0100)
  ******************************************************************************/
 SET ANSI_NULLS ON;
 GO
@@ -36,6 +37,8 @@ AS
                     THEN 1 ELSE 0 END AS BIT) AS [IsReversed]
         , ML.[StockItemId]
         , SI.[Sku]
+        , SI.[ParentStockItemId]
+        , SI.[VariantName]
         , SI.[UnitOfMeasure]
         , ML.[LotId]
         , LO.[LotNumber]

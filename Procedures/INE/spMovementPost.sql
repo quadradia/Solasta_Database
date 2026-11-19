@@ -54,6 +54,7 @@
  * Author: Andres Sosa
  * Created: 2026-11-17
  * Modified: 2026-11-17 - reversing an issue no longer reopens a Cancelled allocation
+ * Modified: 2026-11-19 - refuses a stock item that has active variants (04190), 20261120_0100
  * Example:
  *   DECLARE @Id BIGINT;
  *   EXEC [INE].[spMovementPost] @MovementJson = N'{"movementType":"Transfer","fromLocationId":1,
@@ -331,6 +332,20 @@ BEGIN
         BEGIN
             SELECT TOP (1) @Msg = CONCAT(N'04112|:|Stock item ', ISNULL(CAST([StockItemId] AS NVARCHAR(20)), N'(missing)'), N' was not found or is inactive.')
             FROM @Lines WHERE [TrackingMode] IS NULL;
+            THROW 50000, @Msg, 1;
+        END;
+
+        -- Stock lives on variants only: an item with active variants is a catalog entry.
+        -- A reversal may still undo a movement posted before the item got variants.
+        IF @IsReversal = 0 AND EXISTS (SELECT 1 FROM @Lines AS LN
+                   WHERE EXISTS (SELECT 1 FROM [INE].[StockItems] AS C
+                                 WHERE C.[ParentStockItemId] = LN.[StockItemId] AND C.[IsActive] = 1 AND C.[IsDeleted] = 0))
+        BEGIN
+            SELECT TOP (1) @Msg = CONCAT(N'04190|:|Stock item ', SI.[Sku], N' has variants; stock is kept on its variants. Pick a variant.')
+            FROM @Lines AS LN
+            INNER JOIN [INE].[StockItems] AS SI ON SI.[StockItemID] = LN.[StockItemId]
+            WHERE EXISTS (SELECT 1 FROM [INE].[StockItems] AS C
+                          WHERE C.[ParentStockItemId] = LN.[StockItemId] AND C.[IsActive] = 1 AND C.[IsDeleted] = 0);
             THROW 50000, @Msg, 1;
         END;
 

@@ -10,6 +10,7 @@
  *              takes the user from the API's session context (INE.fxGetSessionContext),
  *              falling back to CONTEXT_INFO.
  *              Rows are soft-deleted, so physical deletes are not audited.
+ *              ParentStockItemId, VariantName and PriceAdder added by 20261120_0100_AddINE_PartVariants.
  * Dependencies: INE.fxGetSessionContext, ACC.fxGetContextUserTable, AUD.AuditActions,
  *               AUD.AuditActionColumns
  * Author: Andres Sosa
@@ -49,6 +50,9 @@ BEGIN
             (N'StockItemID', CAST(D.[StockItemID] AS NVARCHAR(500)), CAST(I.[StockItemID] AS NVARCHAR(500))),
             (N'DealerTenantId', CAST(D.[DealerTenantId] AS NVARCHAR(500)), CAST(I.[DealerTenantId] AS NVARCHAR(500))),
             (N'ProductId', CAST(D.[ProductId] AS NVARCHAR(500)), CAST(I.[ProductId] AS NVARCHAR(500))),
+            (N'ParentStockItemId', CAST(D.[ParentStockItemId] AS NVARCHAR(500)), CAST(I.[ParentStockItemId] AS NVARCHAR(500))),
+            (N'VariantName', CAST(D.[VariantName] AS NVARCHAR(500)), CAST(I.[VariantName] AS NVARCHAR(500))),
+            (N'PriceAdder', CAST(D.[PriceAdder] AS NVARCHAR(500)), CAST(I.[PriceAdder] AS NVARCHAR(500))),
             (N'DefaultVendorId', CAST(D.[DefaultVendorId] AS NVARCHAR(500)), CAST(I.[DefaultVendorId] AS NVARCHAR(500))),
             (N'Sku', CAST(D.[Sku] AS NVARCHAR(500)), CAST(I.[Sku] AS NVARCHAR(500))),
             (N'Name', CAST(D.[Name] AS NVARCHAR(500)), CAST(I.[Name] AS NVARCHAR(500))),

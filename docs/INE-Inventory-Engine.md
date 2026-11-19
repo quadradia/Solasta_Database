@@ -39,6 +39,8 @@ erDiagram
     Vendors |o--o{ Locations : "Vendor returns"
     Products |o--o{ StockItems : "priced product"
     Vendors |o--o{ StockItems : "default vendor"
+    StockItems |o--o{ StockItems : "variants"
+    StockItems ||--o{ StockItemVariantAttributes : ""
     StockItems ||--o{ Lots : ""
     StockItems ||--o{ SerialUnits : ""
     StockItems ||--o{ StockLevels : "reorder rule"
@@ -71,6 +73,7 @@ erDiagram
 |---|---|---|
 | `LocationTypes`, `MovementTypes` | Seeded reference data with fixed IDs; read by `Code` | migrations / `Data/INE` |
 | `Vendors`, `Locations`, `StockItems`, `StockLevels` | Master data | the API, plain CRUD |
+| `StockItemVariantAttributes` | Name/value pairs of a variant (Color = Black) | the API, plain CRUD |
 | `PurchaseOrders`, `PurchaseOrderLines` | Purchasing; lines editable only while Draft | the API (Draft), `spPurchaseOrderSetStatus`, `spMovementPost` |
 | `Receipts` | Packing slips | `spReceiptPost` |
 | `Lots` | Lots, reels or color bins | created by inbound movements (or the API) |
@@ -83,6 +86,16 @@ erDiagram
 **Rule for the API:** read anything, and do plain CRUD on master data, draft POs and open counts. Never write `Movements`, `MovementLines`, `StockBalances`, `SerialUnits` or `Allocations` directly; call the procedures.
 
 **Audit and tenant triggers.** `Vendors`, `Locations`, `StockItems`, `StockLevels`, `PurchaseOrders` and `PurchaseOrderLines` have `trgAutoGen_*_CUD` audit triggers that write `AUD.AuditActions` / `AUD.AuditActionColumns`, with the user from the session context. Every table the API writes with plain CRUD (those six plus `Lots`, `StockCounts`, `StockCountLines`) has a `tr_*_TenantGuard` trigger: the row must belong to the session's tenant (04180), can only reference rows of its own tenant (04181; a PO also needs a stock-holding ship-to), and cannot change tenant (04182). Because these tables have triggers, the API must list them in `SolastaDbContext.TableTriggers`, or EF's inserts fail with SQL error 334.
+
+**Part variants** (20261120_0100). An item the customer must pick a color or other option for is a *parent*: a catalog entry that never holds stock. Each choice is a *variant*, a `StockItems` row with `ParentStockItemId`, a `VariantName` (unique per parent, e.g. `Black`), its own SKU (the API suggests parent SKU + `-` + a 3-letter code, e.g. `LP-100-BLK`) and `PriceAdder`, the customer-facing extra per unit added to the product price on quotes (default 0). Rules, enforced in the database:
+
+- Stock lives on variants only. `spMovementPost` (and so `spReceiptPost` and count postings), `spAllocationCreate`, `spStockCountPost` and the `tr_PurchaseOrderLines_`, `tr_StockCountLines_` and `tr_StockLevels_VariantGuard` triggers refuse an item that has an active variant (04190). A Reversal may still undo a movement posted before the item got variants.
+- One level deep (04191), and an item only gets its first variant while it holds no stock, open allocation, open PO line or reorder rule (04192).
+- A variant takes its parent's `ProductId` (`tr_StockItems_VariantGuard` keeps them in step) and its tenant (04181).
+- `StockItemVariantAttributes` rows belong to variants only (04193), one value per attribute name.
+- `MAC.QuoteLines.StockItemId` names the chosen variant, with `VariantName` and `VariantPriceAdder` snapshots; the line's `UnitPrice` is the product price plus the adder.
+
+`vwStockOnHand`, `vwReorderSuggestions` and `vwMovementHistory` expose `ParentStockItemId` and `VariantName`.
 
 ## 4. Locations and movement types
 
@@ -170,6 +183,10 @@ Views aren't tenant-filtered (same as the other Solasta tables); filter on `Deal
 | 04160-04163 | Stock counts |
 | 04170 | Ledger is append-only |
 | 04171 | PO lines locked after Draft |
+| 04190 | Stock item has active variants; stock is kept on its variants |
+| 04191 | Variants are one level deep |
+| 04192 | Item still holds stock, allocations, open PO lines or reorder rules, so it cannot get variants |
+| 04193 | Only variants have variant attributes |
 | 04180 | Row belongs to a different tenant than the session |
 | 04181 | Row references another tenant's vendor, lead, user, product, item, location, lot or serial |
 | 04182 | A row cannot change tenant |

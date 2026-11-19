@@ -20,6 +20,7 @@
  * Returns: 0 on success (and a result set with the adjustment MovementIDs); -1 on error
  * Author: Andres Sosa
  * Created: 2026-11-17
+ * Modified: 2026-11-19 - refuses count lines on a stock item that has active variants (04190), 20261120_0100
  * Example:
  *   EXEC [INE].[spStockCountPost] @StockCountId = 3;
  ******************************************************************************/
@@ -52,6 +53,13 @@ BEGIN
         WHERE SC.[StockCountID] = @StockCountId AND SC.[DealerTenantId] = @TenantId AND SC.[Status] = 'Open';
         IF @LocationId IS NULL
             THROW 50000, N'04160|:|The stock count was not found or is not open.', 1;
+
+        -- Stock lives on variants only (the line trigger checks this too; lines may predate the variants).
+        IF EXISTS (SELECT 1 FROM [INE].[StockCountLines] AS CL
+                   WHERE CL.[StockCountId] = @StockCountId AND CL.[IsDeleted] = 0
+                     AND EXISTS (SELECT 1 FROM [INE].[StockItems] AS C
+                                 WHERE C.[ParentStockItemId] = CL.[StockItemId] AND C.[IsActive] = 1 AND C.[IsDeleted] = 0))
+            THROW 50000, N'04190|:|A count line names a stock item that has variants; count its variants instead.', 1;
 
         IF EXISTS (SELECT 1 FROM [INE].[StockCountLines] AS CL
                    INNER JOIN [INE].[StockItems] AS SI ON SI.[StockItemID] = CL.[StockItemId]

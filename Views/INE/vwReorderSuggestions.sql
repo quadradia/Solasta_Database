@@ -10,6 +10,7 @@
  *               INE.PurchaseOrderLines, INE.StockItems, INE.Locations, INE.Vendors
  * Author: Andres Sosa
  * Created: 2026-11-17
+ * Modified: 2026-11-19 - exposes ParentStockItemId and VariantName (part variants, 20261120_0100)
  ******************************************************************************/
 SET ANSI_NULLS ON;
 GO
@@ -41,6 +42,8 @@ AS
         , SL.[StockItemId]
         , SI.[Sku]
         , SI.[Name] AS [StockItemName]
+        , SI.[ParentStockItemId]
+        , SI.[VariantName]
         , SI.[UnitOfMeasure]
         , SI.[DefaultVendorId]
         , V.[Name] AS [DefaultVendorName]
