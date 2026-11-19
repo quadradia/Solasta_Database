@@ -261,6 +261,9 @@ BEGIN TRY
             [AchAuthorizationText] [nvarchar](2000) NULL,
             [AchAuthorizedDate] [datetimeoffset](7) NULL,
             [AchAuthorizedIp] [varchar](45) NULL,
+            -- Invoices to apply the payment to once it posts (an ACH debit when it settles): JSON array of
+            -- {"invoiceProxy": "...", "amount": 12.34}; amount null takes as much as fits.
+            [ApplyToInvoicesJson] [nvarchar](4000) NULL,
             [Notes] [nvarchar](1000) NULL,
             [IsActive] [bit] NOT NULL CONSTRAINT [DF_TransactionRequests_IsActive] DEFAULT ((1)),
             [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_TransactionRequests_IsDeleted] DEFAULT ((0)),
