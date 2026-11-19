@@ -5,7 +5,7 @@
  * Description: Each normalized gateway reply for a request (from the call, a webhook or a poll).
  * Author: Andres Sosa
  * Created: 2026-11-20
- * Migrations: 20261120_0300_CreateMCH_MerchantServices
+ * Migrations: 20261120_0400_CreateMCH_MerchantServices
  ******************************************************************************/
 
 SET ANSI_NULLS ON;

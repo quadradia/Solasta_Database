@@ -5,7 +5,7 @@
  * Description: Which gateway and merchant account a tenant uses. No secrets: keys live in the API secrets.
  * Author: Andres Sosa
  * Created: 2026-11-20
- * Migrations: 20261120_0300_CreateMCH_MerchantServices
+ * Migrations: 20261120_0400_CreateMCH_MerchantServices
  ******************************************************************************/
 
 SET ANSI_NULLS ON;

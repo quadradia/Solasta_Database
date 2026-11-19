@@ -1,5 +1,5 @@
 /*
-Migration: 20261120_0300_CreateMCH_MerchantServices
+Migration: 20261120_0400_CreateMCH_MerchantServices
 Author: Andres Sosa
 Date: 2026-11-20
 Description: Merchant services (card and ACH processing) in a new MCH schema, modelled on NVL9_MAIN's MCH but
@@ -33,7 +33,7 @@ Rollback:
   DROP SCHEMA [MCH];
   ALTER TABLE [MAC].[Payments] DROP CONSTRAINT [CK_Payments_Status];
   ALTER TABLE [MAC].[Payments] ADD CONSTRAINT [CK_Payments_Status] CHECK ([Status] IN ('Posted', 'Voided'));
-  DELETE FROM [dbo].[SchemaVersion] WHERE [MigrationName] = N'20261120_0300_CreateMCH_MerchantServices';
+  DELETE FROM [dbo].[SchemaVersion] WHERE [MigrationName] = N'20261120_0400_CreateMCH_MerchantServices';
 Expected impact: a new schema with three seeded lookups and three empty tables; MAC.Payments accepts two more
                  status values. No existing row changes.
 */
@@ -48,7 +48,7 @@ SET NUMERIC_ROUNDABORT OFF;
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 BEGIN TRY
-    DECLARE @MigrationName NVARCHAR(255) = N'20261120_0300_CreateMCH_MerchantServices';
+    DECLARE @MigrationName NVARCHAR(255) = N'20261120_0400_CreateMCH_MerchantServices';
     DECLARE @StartedAt DATETIME2 = SYSUTCDATETIME();
 
     IF EXISTS (SELECT 1 FROM [dbo].[SchemaVersion] WHERE [MigrationName] = @MigrationName AND [Success] = 1)

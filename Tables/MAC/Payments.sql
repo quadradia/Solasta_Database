@@ -11,7 +11,7 @@
  * Author: Andres Sosa
  * Created: 2026-11-20
  * Dependencies: ACC.DealerTenants, QAL.Leads, ACE.Customers
- * Migrations: 20261120_0200_AddMAC_InvoicesAndPayments, 20261120_0300_CreateMCH_MerchantServices
+ * Migrations: 20261120_0200_AddMAC_InvoicesAndPayments, 20261120_0400_CreateMCH_MerchantServices
  ******************************************************************************/
 
 SET ANSI_NULLS ON;

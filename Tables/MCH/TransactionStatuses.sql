@@ -5,7 +5,7 @@
  * Description: Transaction states, NVL9_MAIN codes plus PENDING (ACH not settled) and RETURNED.
  * Author: Andres Sosa
  * Created: 2026-11-20
- * Migrations: 20261120_0300_CreateMCH_MerchantServices
+ * Migrations: 20261120_0400_CreateMCH_MerchantServices
  ******************************************************************************/
 
 SET ANSI_NULLS ON;

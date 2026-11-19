@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Applies 20261120_0300_CreateMCH_MerchantServices (card and ACH processing), first to local Dev and then
+    Applies 20261120_0400_CreateMCH_MerchantServices (card and ACH processing), first to local Dev and then
     to Prod.
 
 .DESCRIPTION
@@ -41,13 +41,13 @@
 
 .EXAMPLE
     # 1. Local Dev
-    .\Deploy_20261120_MCH_MerchantServices.ps1 -Environment Dev -WhatIf
-    .\Deploy_20261120_MCH_MerchantServices.ps1 -Environment Dev
+    .\Deploy_20261120_0400_MCH_MerchantServices.ps1 -Environment Dev -WhatIf
+    .\Deploy_20261120_0400_MCH_MerchantServices.ps1 -Environment Dev
 
 .EXAMPLE
     # 2. Prod: preview, then run
-    .\Deploy_20261120_MCH_MerchantServices.ps1 -Environment Prod -ServerInstance "SOLITMDB001" -Credential (Get-Credential) -WhatIf
-    .\Deploy_20261120_MCH_MerchantServices.ps1 -Environment Prod -ServerInstance "SOLITMDB001" -Credential (Get-Credential)
+    .\Deploy_20261120_0400_MCH_MerchantServices.ps1 -Environment Prod -ServerInstance "SOLITMDB001" -Credential (Get-Credential) -WhatIf
+    .\Deploy_20261120_0400_MCH_MerchantServices.ps1 -Environment Prod -ServerInstance "SOLITMDB001" -Credential (Get-Credential)
 
 .NOTES
     Needs Invoke-Sqlcmd (SqlServer or SQLPS module), as Deploy_Migrations.ps1 does.
@@ -101,7 +101,7 @@ $DeployScript = Join-Path $PSScriptRoot 'Deploy_Migrations.ps1'
 # The migrations to run, in order, each with the migrations it depends on.
 $Plan = @(
     [pscustomobject]@{
-        Name     = '20261120_0300_CreateMCH_MerchantServices'
+        Name     = '20261120_0400_CreateMCH_MerchantServices'
         Requires = @('20261120_0200_AddMAC_InvoicesAndPayments')
     }
 )

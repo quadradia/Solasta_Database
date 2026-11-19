@@ -5,7 +5,7 @@
  * Description: One row per card or ACH attempt (sale, refund, void). Proxy prefix MCTR. Card brand/last 4 or bank last 4 only.
  * Author: Andres Sosa
  * Created: 2026-11-20
- * Migrations: 20261120_0300_CreateMCH_MerchantServices
+ * Migrations: 20261120_0400_CreateMCH_MerchantServices
  ******************************************************************************/
 
 SET ANSI_NULLS ON;

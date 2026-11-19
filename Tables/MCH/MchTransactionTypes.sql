@@ -5,7 +5,7 @@
  * Description: Kinds of transaction, with NVL9_MAIN codes: 10000/10100/10110 card sale/refund/void, 50000/50100/50110 ACH.
  * Author: Andres Sosa
  * Created: 2026-11-20
- * Migrations: 20261120_0300_CreateMCH_MerchantServices
+ * Migrations: 20261120_0400_CreateMCH_MerchantServices
  ******************************************************************************/
 
 SET ANSI_NULLS ON;
