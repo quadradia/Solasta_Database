@@ -1,16 +1,18 @@
 <#
 .SYNOPSIS
-    Applies 20261120_0100_AddINE_PartVariants (part variants: colors/options the customer picks), first to local
-    Dev and then to Prod.
+    Applies 20261120_0100_AddINE_PartVariants (part variants: colors/options the customer picks) and
+    20261120_0300_AddINE_ConvertToVariantsAndQuoteColorChoice (converting a stocked item to colors, and who picked a
+    quote line's color), first to local Dev and then to Prod.
 
 .DESCRIPTION
-    Runs only this migration, through Deploy_Migrations.ps1 with -MigrationFilter set to its exact file name and
+    Runs only these migrations, in order, through Deploy_Migrations.ps1 with -MigrationFilter set to its exact file name and
     -StopOnError, so older migrations that are still pending and known to fail (e.g. 20260506_1200) are never touched.
 
     It adds ParentStockItemId, VariantName and PriceAdder to INE.StockItems, the new empty table
     INE.StockItemVariantAttributes, StockItemId / VariantName / VariantPriceAdder to MAC.QuoteLines, new variant
     guard triggers, and alters spMovementPost, spAllocationCreate, spStockCountPost and three INE views.
-    Existing rows are not changed.
+    Existing rows are not changed. The second adds INE.spStockItemConvertToVariants, alters two INE triggers and adds
+    VariantChosenBy, VariantChosenDate and VariantChosenSignatureId to MAC.QuoteLines.
 
     Before running, the script checks its prerequisites in dbo.SchemaVersion and stops if one is missing.
     After running, it checks that the migration is recorded and that the new columns and table exist.
@@ -104,6 +106,10 @@ $Plan = @(
     [pscustomobject]@{
         Name     = '20261120_0100_AddINE_PartVariants'
         Requires = @('20261117_1900_AddINE_AuditAndTenantGuards', '20261117_2230_AddMAC_QuoteBuilder')
+    },
+    [pscustomobject]@{
+        Name     = '20261120_0300_AddINE_ConvertToVariantsAndQuoteColorChoice'
+        Requires = @('20261120_0100_AddINE_PartVariants', '20261117_2330_AddMAC_QuoteSigning')
     }
 )
 
@@ -221,12 +227,14 @@ SELECT
     CASE WHEN OBJECT_ID(N'INE.StockItemVariantAttributes', N'U') IS NOT NULL THEN 1 ELSE 0 END AS AttributesTable,
     CASE WHEN COL_LENGTH(N'MAC.QuoteLines', N'StockItemId') IS NOT NULL
           AND COL_LENGTH(N'MAC.QuoteLines', N'VariantName') IS NOT NULL
-          AND COL_LENGTH(N'MAC.QuoteLines', N'VariantPriceAdder') IS NOT NULL THEN 1 ELSE 0 END AS QuoteLineColumns,
+          AND COL_LENGTH(N'MAC.QuoteLines', N'VariantPriceAdder') IS NOT NULL
+          AND COL_LENGTH(N'MAC.QuoteLines', N'VariantChosenBy') IS NOT NULL THEN 1 ELSE 0 END AS QuoteLineColumns,
+    CASE WHEN OBJECT_ID(N'INE.spStockItemConvertToVariants', N'P') IS NOT NULL THEN 1 ELSE 0 END AS ConvertProcedure,
     (SELECT COUNT(*) FROM sys.triggers WHERE name IN ('tr_StockItems_VariantGuard', 'tr_PurchaseOrderLines_VariantGuard',
         'tr_StockCountLines_VariantGuard', 'tr_StockLevels_VariantGuard', 'tr_StockItemVariantAttributes_TenantGuard',
         'trgAutoGen_StockItemVariantAttributes_CUD')) AS VariantTriggers;
 "@
-foreach ($c in @('StockItemColumns', 'AttributesTable', 'QuoteLineColumns')) {
+foreach ($c in @('StockItemColumns', 'AttributesTable', 'QuoteLineColumns', 'ConvertProcedure')) {
     if ($check.$c -eq 1) {
         Write-Host "  [ok]   $c" -ForegroundColor Green
     } else {

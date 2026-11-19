@@ -90,10 +90,11 @@ erDiagram
 **Part variants** (20261120_0100). An item the customer must pick a color or other option for is a *parent*: a catalog entry that never holds stock. Each choice is a *variant*, a `StockItems` row with `ParentStockItemId`, a `VariantName` (unique per parent, e.g. `Black`), its own SKU (the API suggests parent SKU + `-` + a 3-letter code, e.g. `LP-100-BLK`) and `PriceAdder`, the customer-facing extra per unit added to the product price on quotes (default 0). Rules, enforced in the database:
 
 - Stock lives on variants only. `spMovementPost` (and so `spReceiptPost` and count postings), `spAllocationCreate`, `spStockCountPost` and the `tr_PurchaseOrderLines_`, `tr_StockCountLines_` and `tr_StockLevels_VariantGuard` triggers refuse an item that has an active variant (04190). A Reversal may still undo a movement posted before the item got variants.
-- One level deep (04191), and an item only gets its first variant while it holds no stock, open allocation, open PO line or reorder rule (04192).
+- One level deep (04191), and an item only gets its first variant while it holds no stock at a stock-holding location, open allocation, open PO line or reorder rule (04192). Stock installed at jobs or sent to vendors stays on the item as history.
+- `spStockItemConvertToVariants` (20261120_0300) does that emptying for staff in one transaction: it creates the first variant, posts an AdjustOut of the item and an AdjustIn of the variant at every stock-holding location (lots by number, serial numbers; the item's units become Voided), re-creates open allocations on the variant, moves reorder rules and open PO lines (a session key lets `tr_PurchaseOrderLines_GuardStatus` pass submitted lines), then links the variant. The same call again is a no-op; an item that already has variants is refused (04194).
 - A variant takes its parent's `ProductId` (`tr_StockItems_VariantGuard` keeps them in step) and its tenant (04181).
 - `StockItemVariantAttributes` rows belong to variants only (04193), one value per attribute name.
-- `MAC.QuoteLines.StockItemId` names the chosen variant, with `VariantName` and `VariantPriceAdder` snapshots; the line's `UnitPrice` is the product price plus the adder.
+- `MAC.QuoteLines.StockItemId` names the chosen variant, with `VariantName` and `VariantPriceAdder` snapshots; the line's `UnitPrice` is the product price plus the adder. `VariantChosenBy` (Staff or Customer), `VariantChosenDate` and `VariantChosenSignatureId` (the signing link a customer used) record who picked it.
 
 `vwStockOnHand`, `vwReorderSuggestions` and `vwMovementHistory` expose `ParentStockItemId` and `VariantName`.
 
@@ -187,6 +188,9 @@ Views aren't tenant-filtered (same as the other Solasta tables); filter on `Deal
 | 04191 | Variants are one level deep |
 | 04192 | Item still holds stock, allocations, open PO lines or reorder rules, so it cannot get variants |
 | 04193 | Only variants have variant attributes |
+| 04194 | The item already has variants (convert it only once) |
+| 04195 | Convert: missing color name or SKU, SKU in use, negative adder |
+| 04196 | Convert: moving the stock failed |
 | 04180 | Row belongs to a different tenant than the session |
 | 04181 | Row references another tenant's vendor, lead, user, product, item, location, lot or serial |
 | 04182 | A row cannot change tenant |
