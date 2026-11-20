@@ -10,9 +10,9 @@ There are two targets:
 A migration always goes to Dev first, then the AutoGenerator (AGC) and the API are built against Dev, and only after
 the PRs are merged does it go to Prod.
 
-Each change goes out through its own wrapper script in `Scripts/deploy/Deploy_*.ps1`. Don't run
-`Deploy_Migrations.ps1` on its own against either database: it would run every pending migration, including old ones
-that are known to fail (such as `20260506_1200`), and it has no Prod guard.
+Each change goes out through its own wrapper script in `Scripts/deploy/Deploy_*.ps1`. Never run
+`Deploy_Migrations.ps1` on its own against Prod: it would run every pending migration, including old ones that are
+known to fail (such as `20260506_1200`), and it has no Prod guard. On Dev it is only for catching up (below).
 
 You need the `SqlServer` PowerShell module (`Install-Module SqlServer`) for `Invoke-Sqlcmd`.
 
@@ -60,6 +60,41 @@ run the wrapper again; a migration that is already recorded is skipped, so a rer
 
 If you only need a migration's SQL checked against a copy of the data, restore a backup of `SOL_MAIN` under another
 name (for example `SOL_TEST`) and pass `-Database SOL_TEST` to the wrapper. Drop that copy when you're done.
+
+### Catching Dev up on everything pending
+
+To bring Dev up to date with every migration in `main` (for example after a while away), use the generic runner,
+on Dev only:
+
+```powershell
+.\Scripts\deploy\Deploy_Migrations.ps1 -ServerInstance DESKTOP-GAHBRKG -Database SOL_MAIN -WhatIf
+.\Scripts\deploy\Deploy_Migrations.ps1 -ServerInstance DESKTOP-GAHBRKG -Database SOL_MAIN -StopOnError
+```
+
+Read the `-WhatIf` list first: old migrations that are known to fail will show as pending. To run one migration
+with it, pass its exact file name to `-MigrationFilter`; a wildcard such as `20261120*` also picks up every other
+migration from that day.
+
+### Building an empty Dev database
+
+On a new machine, create an empty `SOL_MAIN`, then run the baseline (the `SchemaVersion` table, schemas and every
+object as of March 2026), then catch up as above:
+
+```powershell
+sqlcmd -S DESKTOP-GAHBRKG -E -Q "CREATE DATABASE [SOL_MAIN]"
+.\Scripts\deploy\Deploy_Baseline.ps1 -ServerInstance DESKTOP-GAHBRKG -Database SOL_MAIN -StopOnError
+```
+
+### Troubleshooting
+
+| Message | What to do |
+|---|---|
+| `Invoke-Sqlcmd` is not recognized | `Install-Module SqlServer -Scope CurrentUser` |
+| Cannot query SchemaVersion table | The database has no baseline; see *Building an empty Dev database*. |
+| Stopping: prerequisites are not applied | Deploy the listed migrations first (their own wrappers). |
+| No saved login 'Prod' | `.\Scripts\deploy\Save-DeployCredential.ps1 -Name Prod` |
+| Login failed (Prod) | The saved password is out of date: rerun `Save-DeployCredential.ps1 -Name Prod`. |
+| A migration is skipped but never applied | `Deploy_Migrations.ps1` skips any name already in `dbo.SchemaVersion`, even a failed row (`Success = 0`). Wrappers count only `Success = 1`. On Dev, delete the failed row before using the generic runner again. |
 
 ## Deploying to Prod
 
