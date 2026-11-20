@@ -10,7 +10,7 @@
  * Author: Andres Sosa
  * Created: 2026-11-18
  * Dependencies: ACC.DealerTenants, QAL.Leads, ACE.Customers
- * Migrations: 20261118_2215_CreateMSG_Messaging
+ * Migrations: 20261118_2215_CreateMSG_Messaging, 20261120_2100_AddMSG_Calls (LastMessageChannel Call)
  ******************************************************************************/
 
 SET ANSI_NULLS ON;
@@ -60,7 +60,7 @@ BEGIN
         CONSTRAINT [CK_Conversations_Phone] CHECK ([Phone] IS NULL OR [Phone] LIKE '+[1-9]%'),
         CONSTRAINT [CK_Conversations_Contact] CHECK ([Phone] IS NOT NULL OR [Email] IS NOT NULL),
         CONSTRAINT [CK_Conversations_LastMessageDirection] CHECK ([LastMessageDirection] IS NULL OR [LastMessageDirection] IN ('Inbound', 'Outbound')),
-        CONSTRAINT [CK_Conversations_LastMessageChannel] CHECK ([LastMessageChannel] IS NULL OR [LastMessageChannel] IN ('SMS', 'Email')),
+        CONSTRAINT [CK_Conversations_LastMessageChannel] CHECK ([LastMessageChannel] IS NULL OR [LastMessageChannel] IN ('SMS', 'Email', 'Call')),
         CONSTRAINT [CK_Conversations_UnreadCount] CHECK ([UnreadCount] >= 0)
     );
     PRINT 'Created [MSG].[Conversations]';

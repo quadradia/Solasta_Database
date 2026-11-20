@@ -116,6 +116,7 @@ A Proxy-ID takes the form:
 |--------|--------|----------|------------|-------------|------------|
 | `MGCV` | — | Conversation | *(none; `MSG.Conversations.Proxy`)* | One SMS and email thread with a lead, customer or unknown sender | 2026-11-18 |
 | `MGMS` | — | Message | *(none; `MSG.Messages.Proxy`)* | One SMS, MMS or email in or out | 2026-11-18 |
+| `MGCL` | — | Call | *(none; `MSG.Calls.Proxy`)* | One recorded phone call placed from the admin app | 2026-11-20 |
 
 ### RSU — Resource & Users
 
