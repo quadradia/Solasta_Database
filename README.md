@@ -120,6 +120,8 @@ You can add additional schemas as needed for your database.
 
 ## Deployment
 
+To deploy a migration to Prod (SOLITMDB001 / SOL_MAIN), follow [docs/Deploying-to-Prod.md](docs/Deploying-to-Prod.md).
+
 ### Recommended Deployment Order
 
 When deploying database objects, follow this order to respect dependencies:
