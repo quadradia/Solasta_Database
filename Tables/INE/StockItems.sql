@@ -17,8 +17,13 @@
  *              active variants (04190). One level deep (04191); a variant takes its parent's
  *              ProductId (kept in step by tr_StockItems_VariantGuard). Attributes such as
  *              Color = Black live in INE.StockItemVariantAttributes.
+ *              Light strands (20261120_2330_AddINE_LightStrandLengths): an item sold as a strand of
+ *              pods (pucks) has PodsPerStrand and PodSpacingInches; one strand is
+ *              PodsPerStrand x PodSpacingInches long. Both set or both NULL. The light inventory
+ *              report turns strands in stock into feet and inches with them.
  * Dependencies: ACC.DealerTenants, MAC.Products, INE.Vendors
- * Migrations: 20261117_1800_CreateINE_InventoryEngineTables, 20261120_0100_AddINE_PartVariants
+ * Migrations: 20261117_1800_CreateINE_InventoryEngineTables, 20261120_0100_AddINE_PartVariants,
+ *             20261120_2330_AddINE_LightStrandLengths
  * Author: Andres Sosa
  * Created: 2026-11-17
  ******************************************************************************/
@@ -50,6 +55,9 @@ BEGIN
         [VendorSku] [nvarchar](50) NULL,
         -- Last known cost per unit of measure; receipts record the actual cost on each line.
         [StandardCost] [decimal](19, 4) NULL,
+        -- Light strands only: pods (pucks) on one strand and the distance between them in inches.
+        [PodsPerStrand] [int] NULL,
+        [PodSpacingInches] [decimal](9, 3) NULL,
         [IsActive] [bit] NOT NULL CONSTRAINT [DF_StockItems_IsActive] DEFAULT ((1)),
         [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_StockItems_IsDeleted] DEFAULT ((0)),
         [ModifiedDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_StockItems_ModifiedDate] DEFAULT (SYSDATETIMEOFFSET()),
@@ -73,7 +81,9 @@ BEGIN
         CONSTRAINT [CK_StockItems_StandardCost] CHECK ([StandardCost] IS NULL OR [StandardCost] >= 0),
         CONSTRAINT [CK_StockItems_ParentNotSelf] CHECK ([ParentStockItemId] IS NULL OR [ParentStockItemId] <> [StockItemID]),
         CONSTRAINT [CK_StockItems_VariantName] CHECK ([ParentStockItemId] IS NULL OR [VariantName] IS NOT NULL),
-        CONSTRAINT [CK_StockItems_PriceAdder] CHECK ([PriceAdder] >= 0)
+        CONSTRAINT [CK_StockItems_PriceAdder] CHECK ([PriceAdder] >= 0),
+        CONSTRAINT [CK_StockItems_LightStrand] CHECK (([PodsPerStrand] IS NULL AND [PodSpacingInches] IS NULL)
+            OR ([PodsPerStrand] > 0 AND [PodSpacingInches] > 0))
     );
 END;
 

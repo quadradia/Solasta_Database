@@ -11,6 +11,7 @@
  *              falling back to CONTEXT_INFO.
  *              Rows are soft-deleted, so physical deletes are not audited.
  *              ParentStockItemId, VariantName and PriceAdder added by 20261120_0100_AddINE_PartVariants.
+ *              PodsPerStrand and PodSpacingInches added by 20261120_2330_AddINE_LightStrandLengths.
  * Dependencies: INE.fxGetSessionContext, ACC.fxGetContextUserTable, AUD.AuditActions,
  *               AUD.AuditActionColumns
  * Author: Andres Sosa
@@ -62,6 +63,8 @@ BEGIN
             (N'UnitOfMeasure', CAST(D.[UnitOfMeasure] AS NVARCHAR(500)), CAST(I.[UnitOfMeasure] AS NVARCHAR(500))),
             (N'VendorSku', CAST(D.[VendorSku] AS NVARCHAR(500)), CAST(I.[VendorSku] AS NVARCHAR(500))),
             (N'StandardCost', CAST(D.[StandardCost] AS NVARCHAR(500)), CAST(I.[StandardCost] AS NVARCHAR(500))),
+            (N'PodsPerStrand', CAST(D.[PodsPerStrand] AS NVARCHAR(500)), CAST(I.[PodsPerStrand] AS NVARCHAR(500))),
+            (N'PodSpacingInches', CAST(D.[PodSpacingInches] AS NVARCHAR(500)), CAST(I.[PodSpacingInches] AS NVARCHAR(500))),
             (N'IsActive', CAST(D.[IsActive] AS NVARCHAR(500)), CAST(I.[IsActive] AS NVARCHAR(500))),
             (N'IsDeleted', CAST(D.[IsDeleted] AS NVARCHAR(500)), CAST(I.[IsDeleted] AS NVARCHAR(500)))
     ) AS V ([ColumnName], [OldValue], [NewValue])
