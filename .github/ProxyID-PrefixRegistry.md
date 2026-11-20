@@ -104,6 +104,12 @@ A Proxy-ID takes the form:
 | `MAIV` | — | Customer invoice | *(none; `MAC.Invoices.Proxy`)* | A bill to a lead or customer, usually made from a signed quote | 2026-11-20 |
 | `MAPY` | — | Customer payment | *(none; `MAC.Payments.Proxy`)* | Money received from a customer, applied to one or more invoices | 2026-11-20 |
 
+### MCH — Merchant Services
+
+| Prefix | TypeId | TypeName | Type Table | Description | Registered |
+|--------|--------|----------|------------|-------------|------------|
+| `MCTR` | — | Card or ACH transaction | *(none; `MCH.TransactionRequests.Proxy`)* | A card or ACH sale, refund or void sent to a payment gateway | 2026-11-20 |
+
 ### MSG — Messaging
 
 | Prefix | TypeId | TypeName | Type Table | Description | Registered |

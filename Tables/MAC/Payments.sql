@@ -5,11 +5,13 @@
  * Description: Money received from a customer: cash, check, card, ACH, wire, financing or other. AmountApplied is
  *              the part applied to invoices (MAC.PaymentApplications); the rest is an unapplied credit that can be
  *              applied later. Status Posted or Voided; a payment is voided only once nothing is applied.
+ *              Card and ACH payments (MCH.TransactionRequests) can also be Pending (ACH not settled; nothing
+ *              applied) or Failed (declined or returned before posting).
  *              Proxy prefix MAPY; number PAY-{n}, unique per tenant.
  * Author: Andres Sosa
  * Created: 2026-11-20
  * Dependencies: ACC.DealerTenants, QAL.Leads, ACE.Customers
- * Migrations: 20261120_0200_AddMAC_InvoicesAndPayments
+ * Migrations: 20261120_0200_AddMAC_InvoicesAndPayments, 20261120_0400_CreateMCH_MerchantServices
  ******************************************************************************/
 
 SET ANSI_NULLS ON;
@@ -55,7 +57,7 @@ BEGIN
         CONSTRAINT [FK_Payments_Customers] FOREIGN KEY ([CustomerId]) REFERENCES [ACE].[Customers] ([CustomerID]),
         CONSTRAINT [UQ_Payments_Proxy] UNIQUE ([Proxy]),
         CONSTRAINT [CK_Payments_Method] CHECK ([Method] IN ('Cash', 'Check', 'Card', 'ACH', 'Wire', 'Financing', 'Other')),
-        CONSTRAINT [CK_Payments_Status] CHECK ([Status] IN ('Posted', 'Voided')),
+        CONSTRAINT [CK_Payments_Status] CHECK ([Status] IN ('Pending', 'Posted', 'Failed', 'Voided')),
         CONSTRAINT [CK_Payments_Amounts] CHECK ([Amount] > 0 AND [AmountApplied] >= 0 AND [AmountApplied] <= [Amount]),
         CONSTRAINT [CK_Payments_Voided] CHECK ([Status] = 'Posted' OR [AmountApplied] = 0)
     );
