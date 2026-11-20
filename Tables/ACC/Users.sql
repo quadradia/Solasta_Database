@@ -32,6 +32,9 @@ BEGIN
 		[LockoutEndDateUtc] [datetime] NULL,
 		[LockoutEnabled] [bit] NOT NULL,
 		[AccessFailedCount] [int] NOT NULL,
+		-- 1 lets the user have Twilio ring their own phone for calls (MSG.Calls StaffVia 'Phone'); others call
+		-- from the admin app in the browser.
+		[CanCallFromOwnPhone] [bit] NOT NULL CONSTRAINT [DF_Users_CanCallFromOwnPhone] DEFAULT (0),
 		[IsActive] [bit] NOT NULL,
 		[IsDeleted] [bit] NOT NULL,
 		[ModifiedDate] [datetimeoffset](7) NOT NULL,

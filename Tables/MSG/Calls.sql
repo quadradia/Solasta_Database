@@ -33,8 +33,11 @@ BEGIN
         [Status] [varchar](15) NOT NULL,
         -- ACC.Users.UserID of the staff member who placed the call.
         [StaffUserId] [uniqueidentifier] NOT NULL,
-        -- Bridge calls ring the staff member's phone first, then the contact. All three are E.164.
-        [StaffPhone] [varchar](20) NOT NULL,
+        -- How staff took part: 'Phone' (Twilio rang StaffPhone first, they pressed 1) or 'Browser' (the admin app,
+        -- Twilio Client identity StaffClient). Phones are E.164; StaffPhone is NULL for browser calls.
+        [StaffVia] [varchar](10) NOT NULL CONSTRAINT [DF_Calls_StaffVia] DEFAULT ('Phone'),
+        [StaffClient] [varchar](121) NULL,
+        [StaffPhone] [varchar](20) NULL,
         [ContactPhone] [varchar](20) NOT NULL,
         -- The Twilio number the contact sees.
         [CallerId] [varchar](20) NOT NULL,
@@ -71,7 +74,10 @@ BEGIN
         CONSTRAINT [UQ_Calls_Proxy] UNIQUE ([Proxy]),
         CONSTRAINT [CK_Calls_Direction] CHECK ([Direction] IN ('Outbound', 'Inbound')),
         CONSTRAINT [CK_Calls_Status] CHECK ([Status] IN ('Initiated', 'RingingStaff', 'RingingContact', 'InProgress', 'Completed', 'NoAnswer', 'Busy', 'Failed', 'Canceled')),
-        CONSTRAINT [CK_Calls_Phones] CHECK ([StaffPhone] LIKE '+[1-9]%' AND [ContactPhone] LIKE '+[1-9]%' AND [CallerId] LIKE '+[1-9]%'),
+        CONSTRAINT [CK_Calls_StaffVia] CHECK ([StaffVia] IN ('Phone', 'Browser')),
+        CONSTRAINT [CK_Calls_Phones] CHECK ([ContactPhone] LIKE '+[1-9]%' AND [CallerId] LIKE '+[1-9]%'
+            AND (([StaffVia] = 'Phone' AND [StaffPhone] LIKE '+[1-9]%')
+              OR ([StaffVia] = 'Browser' AND [StaffPhone] IS NULL AND [StaffClient] IS NOT NULL))),
         CONSTRAINT [CK_Calls_Provider] CHECK ([Provider] IN ('Twilio')),
         CONSTRAINT [CK_Calls_RecordingStatus] CHECK ([RecordingStatus] IS NULL OR [RecordingStatus] IN ('Pending', 'Stored', 'Failed')),
         CONSTRAINT [CK_Calls_RecordingStored] CHECK ([RecordingStatus] IS NULL OR [RecordingStatus] <> 'Stored' OR [RecordingDocumentId] IS NOT NULL),
