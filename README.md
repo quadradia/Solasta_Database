@@ -120,7 +120,7 @@ You can add additional schemas as needed for your database.
 
 ## Deployment
 
-To deploy a migration to Prod (SOLITMDB001 / SOL_MAIN), follow [docs/Deploying-to-Prod.md](docs/Deploying-to-Prod.md).
+To deploy a migration to local Dev or to Prod, follow [docs/Deploying-Migrations.md](docs/Deploying-Migrations.md).
 
 ### Recommended Deployment Order
 
