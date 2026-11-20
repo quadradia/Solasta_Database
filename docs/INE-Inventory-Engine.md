@@ -98,6 +98,8 @@ erDiagram
 
 `vwStockOnHand`, `vwReorderSuggestions` and `vwMovementHistory` expose `ParentStockItemId` and `VariantName`.
 
+**Light strands** (20261120_2330). A stock item sold as a strand of pods (pucks) has `PodsPerStrand` and `PodSpacingInches` (both set or both NULL, `CK_StockItems_LightStrand`). One strand is `PodsPerStrand × PodSpacingInches` inches long, so 4 × PLD-40 (40 pods, 10 in) is 1,600 in = 133 ft 4 in. The API's light inventory report (`GET api/reports/light-inventory`) sums the strands at stock-holding locations into feet and inches. The migration flags PLD-40 (40, 10), PLD-4 (4, 10), PLD-2 (2, 10) and PLD-1 (1, 1); staff set the values on other items in the Admin item form.
+
 ## 4. Locations and movement types
 
 Location types: `Warehouse`, `Vehicle` (an installer's van; `UserId`), `Staging` (kitting area) are **stock-holding**. `Job` (one per lead; `LeadId`) and `Vendor` (`VendorId`) are not. They still get balances, so "what's installed at this job" and "what's out on RMA" are the same query, but they're excluded from available stock.
