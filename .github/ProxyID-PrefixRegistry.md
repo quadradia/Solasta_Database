@@ -103,6 +103,7 @@ A Proxy-ID takes the form:
 | `MAQS` | — | Quote signature link | *(none; `MAC.QuoteSignatures.Proxy`)* | An e-signature link emailed for a quote, and its signature once signed | 2026-11-17 |
 | `MAIV` | — | Customer invoice | *(none; `MAC.Invoices.Proxy`)* | A bill to a lead or customer, usually made from a signed quote | 2026-11-20 |
 | `MAPY` | — | Customer payment | *(none; `MAC.Payments.Proxy`)* | Money received from a customer, applied to one or more invoices | 2026-11-20 |
+| `MAPE` | — | Public estimate | *(none; `MAC.PublicEstimates.Proxy`)* | A price range the public AI quoting MCP server gave | 2026-11-21 |
 
 ### MCH — Merchant Services
 
