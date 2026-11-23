@@ -8,7 +8,7 @@
  * Author: Andres Sosa
  * Created: 2026-11-17
  * Dependencies: ACC.DealerTenants
- * Migrations: 20261117_0330_CreateMAC_PricingCatalog
+ * Migrations: 20261117_0330_CreateMAC_PricingCatalog, 20261121_1500_AddPublicEstimatesForMcp
  * API mappings: Models/MAC/PricingCatalog.cs is written by hand; remove it when the
  *               AutoGenerator produces an equivalent.
  ******************************************************************************/
@@ -30,6 +30,8 @@ BEGIN
         [EndDate] [date] NULL,
         [MaxValidityHours] [int] NULL,
         [SortOrder] [int] NOT NULL CONSTRAINT [DF_Promotions_SortOrder] DEFAULT ((0)),
+        -- Shown in the public catalog the AI quoting MCP server reads (20261121_1500).
+        [IsPublic] [bit] NOT NULL CONSTRAINT [DF_Promotions_IsPublic] DEFAULT ((0)),
         [IsActive] [bit] NOT NULL CONSTRAINT [DF_Promotions_IsActive] DEFAULT ((1)),
         [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_Promotions_IsDeleted] DEFAULT ((0)),
         [ModifiedDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_Promotions_ModifiedDate] DEFAULT (SYSDATETIMEOFFSET()),

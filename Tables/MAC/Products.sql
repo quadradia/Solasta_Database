@@ -9,7 +9,7 @@
  * Author: Andres Sosa
  * Created: 2026-11-17
  * Dependencies: ACC.DealerTenants
- * Migrations: 20261117_0330_CreateMAC_PricingCatalog, 20261117_2230_AddMAC_QuoteBuilder
+ * Migrations: 20261117_0330_CreateMAC_PricingCatalog, 20261117_2230_AddMAC_QuoteBuilder, 20261121_1500_AddPublicEstimatesForMcp
  * API mappings: Models/MAC/PricingCatalog.cs is written by hand; remove it when the
  *               AutoGenerator produces an equivalent.
  ******************************************************************************/
@@ -32,6 +32,8 @@ BEGIN
         [InstallCostPerUnit] [decimal](19, 4) NULL,
         [ProductCostPerUnit] [decimal](19, 4) NULL,
         [SortOrder] [int] NOT NULL CONSTRAINT [DF_Products_SortOrder] DEFAULT ((0)),
+        -- Shown in the public catalog the AI quoting MCP server reads (20261121_1500).
+        [IsPublic] [bit] NOT NULL CONSTRAINT [DF_Products_IsPublic] DEFAULT ((1)),
         [IsActive] [bit] NOT NULL CONSTRAINT [DF_Products_IsActive] DEFAULT ((1)),
         [IsDeleted] [bit] NOT NULL CONSTRAINT [DF_Products_IsDeleted] DEFAULT ((0)),
         [ModifiedDate] [datetimeoffset](7) NOT NULL CONSTRAINT [DF_Products_ModifiedDate] DEFAULT (SYSDATETIMEOFFSET()),
