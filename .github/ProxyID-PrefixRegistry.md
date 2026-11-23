@@ -92,7 +92,7 @@ A Proxy-ID takes the form:
 
 | Prefix | TypeId | TypeName | Type Table | Description | Registered |
 |--------|--------|----------|------------|-------------|------------|
-| *(none yet — reserved namespace `CE**`)* | | | | | |
+| `CEAP` | — | Appointment | *(none; `ACE.Appointments.Proxy`)* | A calendar appointment with a lead, customer or contact | 2026-11-23 |
 
 ### MAC — Master Catalog
 
