@@ -124,6 +124,45 @@ Never put a password on a command line, in a file in this repository, or in chat
 - The scripts do not read environment variables such as `SQLCMDPASSWORD`. Don't keep the password in one: every
   process running as you inherits it.
 
+### Use the deploy login, not sa
+
+The saved `Prod` login should be `solasta_deploy`, a SQL login with only what the wrappers and migrations need:
+
+| Database | Rights | Why |
+| --- | --- | --- |
+| Server | none (no server roles) | The migrations never touch logins, server settings or other databases. |
+| `SOL_MAIN` | `db_ddladmin`, `db_datareader`, `db_datawriter`, `GRANT EXECUTE`, `GRANT VIEW DEFINITION` | DDL, `sp_rename`, `IDENTITY_INSERT`, `DBCC CHECKIDENT`, seed rows, `dbo.SchemaVersion`, calls to existing procedures, and the wrappers' `sys.tables` / `sys.triggers` checks. |
+| `GBDC_IDENTITY` | `db_datareader`, `db_datawriter` | Its migrations only change IdentityServer configuration rows. |
+
+Create it once, as an admin (here with the sa login that is saved as `Prod` today), then re-save `Prod`:
+
+```powershell
+.\Scripts\deploy\New-DeployLogin.ps1 -ServerInstance SOLITMDB001 -AdminCredentialName Prod -WhatIf
+.\Scripts\deploy\New-DeployLogin.ps1 -ServerInstance SOLITMDB001 -AdminCredentialName Prod   # hidden prompt for the new password
+.\Scripts\deploy\Save-DeployCredential.ps1 -Name Prod                                         # enter solasta_deploy and that password
+.\Scripts\deploy\Deploy_<change>.ps1 -Environment Prod -ServerInstance SOLITMDB001 -CredentialName Prod -WhatIf
+```
+
+The last line checks that the new login can connect and read `dbo.SchemaVersion`. To rotate its password later, run
+`New-DeployLogin.ps1 ... -ResetPassword`, then `Save-DeployCredential.ps1 -Name Prod` again.
+
+For `GBDC_IDENTITY`, `Apply-Migrations.ps1` (NOAHIdentityServer repo) takes a connection string. Build it from the
+same saved login in memory, without typing or printing the password:
+
+```powershell
+$c = Import-Clixml "$env:APPDATA\Solasta\DeployCredentials\Prod.xml"
+$b = New-Object System.Data.SqlClient.SqlConnectionStringBuilder
+$b['Data Source'] = 'SOLITMDB001'; $b['Initial Catalog'] = 'GBDC_IDENTITY'
+$b['User ID'] = $c.UserName; $b['Password'] = $c.GetNetworkCredential().Password
+.\Database\Scripts\Apply-Migrations.ps1 -ConnectionString $b.ConnectionString -List
+Remove-Variable c, b
+```
+
+**One exception.** A migration that creates a new schema with `AUTHORIZATION [dbo]` (one per new module, such as
+`CreateMCH_MerchantServices`) needs `IMPERSONATE` on `dbo`, which is as strong as `db_owner`, so the deploy login is
+deliberately not given it and that migration fails with a permission error. Run that one wrapper with an admin login,
+`-Credential (Get-Credential)`, and keep using `-CredentialName Prod` for everything else. Don't save the admin login.
+
 ## When Claude runs it
 
 Claude runs the wrapper through a Remote Control session on your PC, which uses your saved `Prod` login. It never
