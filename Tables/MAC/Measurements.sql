@@ -60,7 +60,7 @@ BEGIN
         CONSTRAINT [FK_Measurements_Documents] FOREIGN KEY ([DocumentId])
             REFERENCES [DOC].[Documents] ([DocumentID]),
         CONSTRAINT [UQ_Measurements_Proxy] UNIQUE ([Proxy]),
-        CONSTRAINT [CK_Measurements_Source] CHECK ([Source] IN ('KML', 'Manual')),
+        CONSTRAINT [CK_Measurements_Source] CHECK ([Source] IN ('KML', 'Manual', 'Drawing')),
         CONSTRAINT [CK_Measurements_Status] CHECK ([Status] IN ('Draft', 'Reviewed')),
         CONSTRAINT [CK_Measurements_LengthBasis] CHECK ([LengthBasis] IN ('Sloped', 'Flat')),
         CONSTRAINT [CK_Measurements_AllowancePct] CHECK ([AllowancePct] >= 0 AND [AllowancePct] <= 100)
