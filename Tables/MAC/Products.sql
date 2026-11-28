@@ -4,12 +4,15 @@
  * Name: Products
  * Description: Products a tenant sells: rails priced per foot (P001, D001, D002), fixed costs
  *              (dormers, gables, height cost) and add-ons
- *              such as cameras and DVRs. InstallCostPerUnit and ProductCostPerUnit are
+ *              such as DVRs, and camera system parts (Category Camera: an NVR bundle, fiber kit,
+ *              install), quoted one line each and listed in the estimate's Camera System section.
+ *              InstallCostPerUnit and ProductCostPerUnit are
  *              internal and never printed on the customer estimate.
  * Author: Andres Sosa
  * Created: 2026-11-17
  * Dependencies: ACC.DealerTenants
- * Migrations: 20261117_0330_CreateMAC_PricingCatalog, 20261117_2230_AddMAC_QuoteBuilder, 20261121_1500_AddPublicEstimatesForMcp
+ * Migrations: 20261117_0330_CreateMAC_PricingCatalog, 20261117_2230_AddMAC_QuoteBuilder, 20261121_1500_AddPublicEstimatesForMcp,
+ *             20261128_1500_AddMAC_CameraCategory
  * API mappings: Models/MAC/PricingCatalog.cs is written by hand; remove it when the
  *               AutoGenerator produces an equivalent.
  ******************************************************************************/
@@ -44,7 +47,7 @@ BEGIN
         CONSTRAINT [PK_Products] PRIMARY KEY CLUSTERED ([ProductID] ASC),
         CONSTRAINT [FK_Products_DealerTenants] FOREIGN KEY ([DealerTenantId])
             REFERENCES [ACC].[DealerTenants] ([DealerTenantID]),
-        CONSTRAINT [CK_Products_Category] CHECK ([Category] IN ('Rail', 'Fixed', 'AddOn')),
+        CONSTRAINT [CK_Products_Category] CHECK ([Category] IN ('Rail', 'Fixed', 'AddOn', 'Camera')),
         CONSTRAINT [CK_Products_Unit] CHECK ([Unit] IN ('ft', 'each')),
         CONSTRAINT [CK_Products_PricePerUnit] CHECK ([PricePerUnit] >= 0),
         CONSTRAINT [CK_Products_InstallCostPerUnit] CHECK ([InstallCostPerUnit] IS NULL OR [InstallCostPerUnit] >= 0),
