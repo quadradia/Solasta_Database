@@ -16,7 +16,7 @@
  *              the signing link used (VariantChosenSignatureId) (20261120_0300).
  * Dependencies: MAC.Quotes, MAC.Products, INE.StockItems
  * Migrations: 20261117_2230_AddMAC_QuoteBuilder, 20261120_0100_AddINE_PartVariants,
- *             20261120_0300_AddINE_ConvertToVariantsAndQuoteColorChoice
+ *             20261120_0300_AddINE_ConvertToVariantsAndQuoteColorChoice, 20261128_1500_AddMAC_CameraCategory
  * API mappings: Models/MAC/QuoteLine.cs is written by hand; remove it when the
  *               AutoGenerator produces an equivalent.
  ******************************************************************************/
@@ -31,7 +31,7 @@ BEGIN
     (
         [QuoteLineID] [bigint] IDENTITY(1,1) NOT NULL,
         [QuoteId] [bigint] NOT NULL,
-        -- Rail (one per location), Fixed (dormers, gables, height cost) or AddOn (camera, DVR, ...).
+        -- Rail (one per location), Fixed (dormers, gables, height cost), AddOn (DVR, ...) or Camera (camera system parts).
         [LineType] [varchar](10) NOT NULL,
         [SortOrder] [int] NOT NULL CONSTRAINT [DF_QuoteLines_SortOrder] DEFAULT ((0)),
         -- Rail lines: Front, Side-Left, Side-Right, Back, Back - Low, ...
@@ -58,6 +58,9 @@ BEGIN
         [PerFootDiscount] [decimal](18, 2) NULL,
         [PercentDiscount] [decimal](18, 2) NULL,
         [SpecialDiscount] [decimal](18, 2) NULL,
+        -- AddOn and Camera lines: an amount staff take off the line (e.g. to sell at cost), before the percent
+        -- and special discounts (20261128_1500).
+        [ItemDiscount] [decimal](18, 2) NULL,
         [Discount] [decimal](18, 2) NULL,
         [SubTotal] [decimal](18, 2) NULL,
         [Tax] [decimal](18, 2) NULL,
@@ -76,10 +79,11 @@ BEGIN
         CONSTRAINT [FK_QuoteLines_Products] FOREIGN KEY ([ProductId]) REFERENCES [MAC].[Products] ([ProductID]),
         CONSTRAINT [FK_QuoteLines_StockItems] FOREIGN KEY ([StockItemId]) REFERENCES [INE].[StockItems] ([StockItemID]),
         CONSTRAINT [FK_QuoteLines_QuoteSignatures] FOREIGN KEY ([VariantChosenSignatureId]) REFERENCES [MAC].[QuoteSignatures] ([QuoteSignatureID]),
-        CONSTRAINT [CK_QuoteLines_LineType] CHECK ([LineType] IN ('Rail', 'Fixed', 'AddOn')),
+        CONSTRAINT [CK_QuoteLines_LineType] CHECK ([LineType] IN ('Rail', 'Fixed', 'AddOn', 'Camera')),
         CONSTRAINT [CK_QuoteLines_Location] CHECK ([LineType] <> 'Rail' OR [Location] IS NOT NULL),
         CONSTRAINT [CK_QuoteLines_Quantity] CHECK ([Quantity] >= 0),
         CONSTRAINT [CK_QuoteLines_UnitPrice] CHECK ([UnitPrice] >= 0),
+        CONSTRAINT [CK_QuoteLines_ItemDiscount] CHECK ([ItemDiscount] IS NULL OR ([ItemDiscount] >= 0 AND [LineType] IN ('AddOn', 'Camera'))),
         CONSTRAINT [CK_QuoteLines_MeasuredFeet] CHECK ([MeasuredFeet] IS NULL OR [MeasuredFeet] >= 0),
         CONSTRAINT [CK_QuoteLines_VariantPriceAdder] CHECK ([VariantPriceAdder] IS NULL OR [VariantPriceAdder] >= 0),
         CONSTRAINT [CK_QuoteLines_VariantSnapshot] CHECK ([StockItemId] IS NOT NULL OR ([VariantName] IS NULL AND [VariantPriceAdder] IS NULL)),
